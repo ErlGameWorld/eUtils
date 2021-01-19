@@ -1,0 +1,110 @@
+#include <stdint.h>
+#include "erl_nif.h"
+
+#ifdef _WIN32
+#define INLINE __inline
+#else
+#define INLINE inline
+#endif
+
+static ErlNifResourceType* ResType = NULL;
+ERL_NIF_TERM null;
+ERL_NIF_TERM ok;
+
+
+static int load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info)
+{
+    ErlNifResourceFlags flags = ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER;
+    ResType = enif_open_resource_type(env, NULL, "_nifArray_", NULL, flags, NULL);
+    if(NULL == ResType)
+        return -1;
+    null = enif_make_atom(env, "null");
+    ok = enif_make_atom(env, "ok");
+    return 0;
+}
+
+static ERL_NIF_TERM new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    uint32_t Size;
+    if(!enif_get_uint(env, argv[0], &Size)) {
+        return enif_make_badarg(env);
+    }
+
+    ErlNifBinary **ArrayPtr = (ErlNifBinary **) enif_alloc_resource(ResType, sizeof(ErlNifBinary*)*Size);
+    int i;
+    for(i = 0; i < Size; i++){
+        ArrayPtr[i] = NULL;
+    }
+    ERL_NIF_TERM Res = enif_make_resource(env, ArrayPtr);
+    enif_release_resource(ArrayPtr);
+    return Res;
+}
+
+static ERL_NIF_TERM get(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    uint32_t Index;
+    if(!enif_get_uint(env, argv[1], &Index)) {
+        return enif_make_badarg(env);
+    }
+
+    ErlNifBinary **ArrayPtr;
+
+    if (!enif_get_resource(env, argv[0], ResType, (void**)&ArrayPtr)){
+        return enif_make_badarg(env);
+    }
+    if(NULL != ArrayPtr[Index]){
+        ERL_NIF_TERM Ret;
+        enif_binary_to_term(env, ArrayPtr[Index]->data, ArrayPtr[Index]->size, &Ret, 0);
+        return Ret;
+    } else{
+        return null;
+    }
+}
+
+static ERL_NIF_TERM put(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    uint32_t Index;
+    if(!enif_get_uint(env, argv[1], &Index)) {
+        return enif_make_badarg(env);
+    }
+
+    ErlNifBinary *Value = (ErlNifBinary *)malloc(sizeof(ErlNifBinary));
+    if(!enif_term_to_binary(env, argv[2], Value))
+        return enif_make_badarg(env);
+
+    ErlNifBinary **ArrayPtr;
+
+    if (!enif_get_resource(env, argv[0], ResType, (void**)&ArrayPtr)){
+        return enif_make_badarg(env);
+    }
+    if(NULL == ArrayPtr[Index]){
+         ArrayPtr[Index] = Value;
+        return ok;
+    } else{
+        enif_release_binary(ArrayPtr[Index]),
+        free(ArrayPtr[Index]);
+        ArrayPtr[Index] = Value;
+        return ok;
+    }
+}
+
+static ERL_NIF_TERM test(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    ErlNifBinary Value;
+    if(!enif_term_to_binary(env, argv[0], &Value))
+        return enif_make_badarg(env);
+    // enif_fprintf(stdout, "IMY************  %T", argv[0]);
+    ERL_NIF_TERM Ret;
+    enif_binary_to_term(env, Value.data, Value.size, &Ret, 0);
+    enif_release_binary(&Value);
+    return Ret;
+}
+
+static ErlNifFunc nifFuns[] = {
+        {"new", 1, new},
+        {"get", 2, get},
+        {"put", 3, put},
+        {"test", 1, test},
+};
+
+ERL_NIF_INIT(nifArray, nifFuns, &load, NULL, NULL, NULL)

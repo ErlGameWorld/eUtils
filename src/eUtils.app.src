@@ -1,0 +1,10 @@
+{application, eUtils,
+   [{description, "erlang misc utils!!!"},
+      {vsn, "1.0.0"},
+      {registered, []},
+      {applications, [kernel, stdlib]},
+      {env, []},
+      {modules, []},
+      {licenses, ["MIT License"]},
+      {links, []}
+   ]}.
