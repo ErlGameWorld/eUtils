@@ -13,7 +13,7 @@ toLowerStr(List) when is_list(List) ->
 	[begin
 		 case C >= $A andalso C =< $Z of
 			 true ->
-				 C - $A + $a;
+				 C + 32;
 			 _ ->
 				 C
 		 end
@@ -25,7 +25,7 @@ toUpperStr(List) when is_list(List) ->
 	[begin
 		 case C >= $a andalso C =< $z of
 			 true ->
-				 C - $a + $A;
+				 C - 32;
 			 _ ->
 				 C
 		 end

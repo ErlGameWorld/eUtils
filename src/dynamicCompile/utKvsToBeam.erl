@@ -2,7 +2,6 @@
 
 -export([
    load/2
-   , beamToSrc/1
 ]).
 
 %% 注意 map类型的数据不能当做key
@@ -41,16 +40,3 @@ lookup_clauses([], Acc) ->
    lists:reverse(lists:flatten([lookup_clause_anon() | Acc]));
 lookup_clauses([{Key, Value} | T], Acc) ->
    lookup_clauses(T, [lookup_clause(Key, Value) | Acc]).
-
-%% 通过beam生成erl文件，生成的beam编译选项必要带debug_info才行
-beamToSrc(Module) ->
-   case beam_lib:chunks(code:which(Module), [abstract_code]) of
-      {ok, {_, [{abstract_code, {_, AC}}]}} ->
-         Code = erl_prettypr:format(erl_syntax:form_list(AC)),
-         file:write_file(lists:concat([Module, ".erl"]), list_to_binary(Code)),
-         io:format("build beam:~p to erl:~p success.~n", [Module, Module]);
-      {error, beam_lib, Reason} ->
-         io:format("code_gen_erl_file error, reason:~p~n", [Reason]);
-      _Err ->
-         io:format("code_gen_erl_file error, reason:~p~n", [_Err])
-   end.

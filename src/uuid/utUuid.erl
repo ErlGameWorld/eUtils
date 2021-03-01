@@ -4,6 +4,7 @@
    randStr/1            %% 随机指定长度的字符串
    , uuid/0               %% 获取唯一UUID
    , uuidHex/0            %% 获取hex格式的唯一UUID
+   , uuidHexBin/0
 ]).
 
 -spec randStr(integer()) -> string().
@@ -28,3 +29,7 @@ uuid() ->
 -spec uuidHex() -> binary().
 uuidHex() ->
    utMd5:getMd5Hex(term_to_binary({erlang:system_time(nanosecond), rand:uniform(134217727), make_ref()})).
+
+-spec uuidHexBin() -> binary().
+uuidHexBin() ->
+   utMd5:getMd5HexBin(term_to_binary({erlang:system_time(nanosecond), rand:uniform(134217727), make_ref()})).

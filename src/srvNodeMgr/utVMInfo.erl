@@ -464,22 +464,35 @@ get_processes() ->
 		get_process_info_and_large_than_value(memory, 0)).
 
 memInfoInit(CurModule, CurLine) ->
-	erlang:put(?pdMemInfo, {CurModule, CurLine, erlang:system_time(nanosecond), recon:info(self(), memory_used)}).
+	erlang:put(?pdMemInfo, {CurModule, CurLine, erlang:system_time(nanosecond), recon:info(self(), memory_used), erlang:memory()}).
 
 memInfoPrint(CurModule, CurLine, Threshold) ->
 	case erlang:get(?pdMemInfo) of
 		undefined ->
-			erlang:put(?pdMemInfo, {CurModule, CurLine, erlang:system_time(nanosecond), recon:info(self(), memory_used)});
-		{OldModule, OldLine, OldTime, OldMemInfo} ->
+			erlang:put(?pdMemInfo, {CurModule, CurLine, erlang:system_time(nanosecond), recon:info(self(), memory_used), erlang:memory()});
+		{OldModule, OldLine, OldTime, OldMemInfo, OldSumInfo} ->
 			CurMemInfo = recon:info(self(), memory_used),
 			CurTime = erlang:system_time(nanosecond),
-			erlang:put(?pdMemInfo, {CurModule, CurLine, CurTime, recon:info(self(), memory_used)}),
-			OldUsed = element(2, lists:nth(1, element(2, OldMemInfo))),
-			CurUsed = element(2, lists:nth(1, element(2, CurMemInfo))),
-			Sub = CurUsed - OldUsed,
-			case erlang:abs(Sub) >= Threshold of
+			CurSumInfo = erlang:memory(),
+			erlang:put(?pdMemInfo, {CurModule, CurLine, CurTime, CurMemInfo, CurSumInfo}),
+			SubPid = element(2, lists:nth(1, element(2, CurMemInfo))) - element(2, lists:nth(1, element(2, OldMemInfo))),
+			SubSum = element(2, lists:keyfind(total, 1, CurSumInfo)) - element(2, lists:keyfind(total, 1, OldSumInfo)),
+			case erlang:abs(SubSum) >= Threshold orelse erlang:abs(SubPid) >= Threshold of
 				true ->
-					io:format("IMY*********Memory use changes are too large~n~p~n~p~n~p~n~p~n", [{addOrSub, Sub}, {timeDiff, CurTime - OldTime}, {old, OldModule, OldLine, OldTime, OldMemInfo}, {cur, CurModule, CurLine, CurTime, OldMemInfo}]);
+					io:format(
+						"IMY*********Memory use changes are too large:~n"
+						"addOrSubSum:~20w~n"
+						"addOrSubPid:~20w~n"
+						"usedTimeDiff:~19w~n"
+						"oldLine:~w~n"
+						"CurLine:~w~n"
+						"&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n"
+						"OldSumInfo:~w~n"
+						"CurSumInfo:~w~n"
+						"&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n"
+						"OldPidInfo:~p~n"
+						"************************************************************************************~n"
+						"CurPidInfo:~p~n", [SubSum, SubPid, CurTime - OldTime, {old, OldModule, OldLine, OldTime}, {cur, CurModule, CurLine, CurTime}, OldSumInfo, CurSumInfo, OldMemInfo, CurMemInfo]);
 				_ ->
 					ignore
 			end

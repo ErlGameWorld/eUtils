@@ -1,0 +1,1 @@
+ erl -name attach@127.0.0.1 -setcookie 123 -hidden -remsh aa@127.0.0.1

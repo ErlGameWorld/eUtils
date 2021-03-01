@@ -49,11 +49,13 @@ dataType(Data) when is_integer(Data) -> integer;
 dataType(Data) when is_binary(Data) -> binary;
 dataType(Data) when is_function(Data) -> function;
 dataType(Data) when is_tuple(Data) -> tuple;
+dataType(Data) when is_map(Data) -> map;
 dataType(Data) when is_atom(Data) -> atom;
+%%dataType(Data) when is_boolean(Data) -> boolean;
 dataType(Data) when is_bitstring(Data) -> bitstring;
-dataType(Data) when is_boolean(Data) -> boolean;
 dataType(Data) when is_float(Data) -> float;
 dataType(Data) when is_number(Data) -> number;
+dataType(Data) when is_reference(Data) -> reference;
 dataType(Data) when is_pid(Data) -> pid;
 dataType(Data) when is_port(Data) -> port;
 dataType(_Data) -> not_know.
