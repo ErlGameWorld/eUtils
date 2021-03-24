@@ -1,7 +1,7 @@
 -module(utTime).
 -include("utTime.hrl").
 
--import(calendar, [day_of_the_week/1, iso_week_number/1, date_to_gregorian_days/1]).
+-import(calendar, [day_of_the_week/1, day_of_the_week/3, iso_week_number/1, date_to_gregorian_days/1]).
 
 -export([
    now/0                            %% 当前的时间戳 秒
@@ -137,27 +137,27 @@ curTime() ->
 %% 当前星期几
 -spec weekDay() -> week().
 weekDay() ->
-   calendar:day_of_the_week(erlang:date()).
+   day_of_the_week(erlang:date()).
 
 %% 计算Data是星期几
 -spec weekDay(Date :: date()) -> week().
 weekDay(Date) ->
-   calendar:day_of_the_week(Date).
+   day_of_the_week(Date).
 
 %% 计算 年 月 日 是星期几
 -spec weekDay(Year :: year(), Month :: month(), Day :: day()) -> week().
 weekDay(Year, Month, Day) ->
-   calendar:day_of_the_week(Year, Month, Day).
+   day_of_the_week(Year, Month, Day).
 
 %% 计算当前的星期周期
 -spec weekCycle() -> yearWeekCycle().
 weekCycle() ->
-   calendar:iso_week_number(erlang:date()).
+   iso_week_number(erlang:date()).
 
 %% 计算 Date 的星期周期
 -spec weekCycle(Date :: date()) -> yearWeekCycle().
 weekCycle(Date) ->
-   calendar:iso_week_number(Date).
+   iso_week_number(Date).
 
 %% 将秒单位的时间戳 转为本地 datetime()
 -spec secToLDateTime(Sec :: timestamp()) -> datetime().
@@ -712,7 +712,7 @@ timeToSecs({H, M, S}) ->
 %% 计算 Date为该年的哪一天
 -spec daysInYear(date()) -> integer().
 daysInYear({Y, _, _} = Date) ->
-   calendar:date_to_gregorian_days(Date) - calendar:date_to_gregorian_days({Y, 1, 1}).
+   date_to_gregorian_days(Date) - date_to_gregorian_days({Y, 1, 1}).
 
 %%  Data to Str
 -spec dateToStr(date()) -> string().

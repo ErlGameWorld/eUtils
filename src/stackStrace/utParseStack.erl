@@ -16,30 +16,21 @@
 %% [{file, 一个字符串, 代表函数源文件的文件名}, {line, 元组的第二个元素是发生异常或调用函数的源文件中的行号, 整数> 0} :
 
 %% term序列化, term转为string
-termToStr(Bin) when is_binary(Bin) ->
-   binary_to_list(Bin);
-termToStr(Term) ->
-   case catch io_lib:format("~w", [Term]) of
-      {'EXIT', _} -> lists:flatten(io_lib:format("~p", [Term]));
-      GoodString -> lists:flatten(GoodString)
-   end.
-
-parseStack(Stacktrace, Class, Reason) ->
-   CR = io_lib:format("~n  Class:~s~n  Reason:~p~n  Stacktrace:", [Class, Reason]),
-   [CR | parseStack(Stacktrace)].
+parseStack(Class, Reason, Stacktrace) ->
+   eFmt:formatBin(<<"~n  Class:~s~n  Reason:~p~n  Stacktrace:~s">>, [Class, Reason, parseStack(Stacktrace)]).
 
 parseStack(Stacktrace) ->
-   [begin
+   <<begin
        case Location of
           [] ->
-             [<<"\n     ">>, atom_to_list(Mod), <<":">>, atom_to_list(Func), <<"(">>, termToStr(Arity), <<")">>];
+             <<"     ", (atom_to_binary(Mod, utf8))/binary, ":", (atom_to_binary(Func, utf8))/binary, "(", (eFmt:formatBin("~w", [Arity]))/binary, ")\n">>;
           [{file, File}, {line, Line}] ->
-             [<<"\n     ">>, atom_to_list(Mod), <<":">>, atom_to_list(Func), <<"/">>, integer_to_binary(Arity), <<" (">>, File, <<":">>, integer_to_binary(Line), <<")">>];
+             <<"     ", (atom_to_binary(Mod, utf8))/binary, ":", (atom_to_binary(Func, utf8))/binary, "/", (integer_to_binary(Arity))/binary, "(", (unicode:characters_to_binary(File))/binary, ":", (integer_to_binary(Line))/binary, ")\n">>;
           _ ->
-             [<<"\n     ">>, atom_to_list(Mod), <<":">>, atom_to_list(Func), <<" (">>, termToStr(Arity), <<")">>, termToStr(Location)]
+             <<"     ", (atom_to_binary(Mod, utf8))/binary, ":", (atom_to_binary(Func, utf8))/binary, "(", (eFmt:formatBin("~w", [Arity]))/binary, ")", (eFmt:formatBin("~w", [Location]))/binary, "\n">>
        end
     end || {Mod, Func, Arity, Location} <- Stacktrace
-   ].
+   >>.
 
 printStack(Tag) ->
    ?PRINT_STACK(Tag).
@@ -68,8 +59,9 @@ testStack(Index) ->
    catch
       ?EXCEPTION(Class, Reason, Stacktrace) ->
          Stacktrace = ?GET_STACK(Stacktrace),
+         io:format("~p~n", [Stacktrace]),
          io:format(parseStack(Stacktrace)),
-         io:format(parseStack(Stacktrace, Class, Reason))
+         io:format(parseStack(Class, Reason, Stacktrace))
       %% lagere使用示例
       %% lager:error(parse_stack(Stacktrace)),
       %% lager:error(parse_stack(Stacktrace, Class, Reason))

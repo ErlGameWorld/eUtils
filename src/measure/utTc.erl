@@ -4,9 +4,71 @@
 -compile({inline_size, 128}).
 
 -export([
-   ts/4
+   tc/1
+   , tc/2
+   , tc/3
+   , ts/4
    , tm/5
+   , cvrTimeUnit/3
+   , test/1
 ]).
+
+%% Measure the execution time (in nanoseconds) for Fun().
+-spec tc(Fun :: function()) -> {Time :: integer(), Value :: term()}.
+tc(F) ->
+   T1 = erlang:monotonic_time(),
+   Val = F(),
+   T2 = erlang:monotonic_time(),
+   Time = cvrTimeUnit(T2 - T1, native, nanosecond),
+   {Time, Val}.
+
+%% Measure the execution time (in nanoseconds) for Fun(Args).
+-spec tc(Fun :: function(), Arguments :: [term()]) -> {Time :: integer(), Value :: term()}.
+tc(F, A) ->
+   T1 = erlang:monotonic_time(),
+   Val = apply(F, A),
+   T2 = erlang:monotonic_time(),
+   Time = cvrTimeUnit(T2 - T1, native, nanosecond),
+   {Time, Val}.
+
+%% Measure the execution time (in nanoseconds) for an MFA.
+-spec tc(Module :: module(), Function :: atom(), Arguments :: [term()]) -> {Time :: integer(), Value :: term()}.
+tc(M, F, A) ->
+   T1 = erlang:monotonic_time(),
+   Val = apply(M, F, A),
+   T2 = erlang:monotonic_time(),
+   Time = cvrTimeUnit(T2 - T1, native, nanosecond),
+   {Time, Val}.
+
+-spec cvrTimeUnit(Time :: integer(), FromUnit :: erlang:time_unit(), ToUnit :: erlang:time_unit()) -> ConvertedTime :: integer().
+cvrTimeUnit(Time, FromUnit, ToUnit) ->
+   try
+      FU =
+         case FromUnit of
+            native -> erts_internal:time_unit();
+            perf_counter -> erts_internal:perf_counter_unit();
+            nanosecond -> 1000 * 1000 * 1000;
+            microsecond -> 1000 * 1000;
+            millisecond -> 1000;
+            second -> 1
+         end,
+      TU =
+         case ToUnit of
+            native -> erts_internal:time_unit();
+            perf_counter -> erts_internal:perf_counter_unit();
+            nanosecond -> 1000 * 1000 * 1000;
+            microsecond -> 1000 * 1000;
+            millisecond -> 1000;
+            second -> 1
+         end,
+      case Time < 0 of
+         true -> (TU * Time - (FU - 1)) div FU;
+         _ -> TU * Time div FU
+      end
+   catch
+      _ : _ ->
+         erlang:error(badarg, [Time, FromUnit, ToUnit])
+   end.
 
 %% 单进程循环测试：LoopTimes是循环次数
 %% utTc:ts(LoopTimes, Module, Function, ArgsList).
@@ -14,8 +76,10 @@
 %% utTc:tm(ProcessesCount, LoopTimes, Module, Function, ArgsList).
 
 doTc(M, F, A) ->
-   {Microsecond, _} = timer:tc(M, F, A),
-   Microsecond.
+   T1 = erlang:monotonic_time(),
+   apply(M, F, A),
+   T2 = erlang:monotonic_time(),
+   cvrTimeUnit(T2 - T1, native, nanosecond).
 
 distribution(List, Aver) ->
    distribution(List, Aver, 0, 0).
@@ -39,10 +103,10 @@ ts(LoopTime, M, F, A) ->
    io:format("execute Fun :~p~n", [F]),
    io:format("execute Mod :~p~n", [M]),
    io:format("execute LoopTime:~p~n", [LoopTime]),
-   io:format("MaxTime: ~10s(us) ~10s(s)~n", [integer_to_binary(Max), float_to_binary(Max / 1000000, [{decimals, 6}, compact])]),
-   io:format("MinTime: ~10s(us) ~10s(s)~n", [integer_to_binary(Min), float_to_binary(Min / 1000000, [{decimals, 6}, compact])]),
-   io:format("SumTime: ~10s(us) ~10s(s)~n", [integer_to_binary(Sum), float_to_binary(Sum / 1000000, [{decimals, 6}, compact])]),
-   io:format("AvgTime: ~10s(us) ~10s(s)~n", [float_to_binary(Aver, [{decimals, 6}, compact]), float_to_binary(Aver / 1000000, [{decimals, 6}, compact])]),
+   io:format("MaxTime: ~10s(ns) ~10s(s)~n", [integer_to_binary(Max), float_to_binary(Max / 1000000000, [{decimals, 6}, compact])]),
+   io:format("MinTime: ~10s(ns) ~10s(s)~n", [integer_to_binary(Min), float_to_binary(Min / 1000000000, [{decimals, 6}, compact])]),
+   io:format("SumTime: ~10s(ns) ~10s(s)~n", [integer_to_binary(Sum), float_to_binary(Sum / 1000000000, [{decimals, 6}, compact])]),
+   io:format("AvgTime: ~10s(ns) ~10s(s)~n", [float_to_binary(Aver, [{decimals, 6}, compact]), float_to_binary(Aver / 1000000000, [{decimals, 6}, compact])]),
    io:format("Grar   : ~10s(cn) ~10s(~s)~n", [integer_to_binary(Greater), float_to_binary(Greater / LoopTime, [{decimals, 2}]), <<"%">>]),
    io:format("Less   : ~10s(cn) ~10s(~s)~n", [integer_to_binary(Less), float_to_binary(Less / LoopTime, [{decimals, 2}]), <<"%">>]),
    io:format("=====================~n").
@@ -53,22 +117,22 @@ loopTs(0, _M, _F, _A, LoopTime, Max, Min, Sum, List) ->
    {Greater, Less} = distribution(List, Aver),
    {Max, Min, Sum, Aver, Greater, Less};
 loopTs(Index, M, F, A, LoopTime, Max, Min, Sum, List) ->
-   Microsecond = doTc(M, F, A),
-   NewSum = Sum + Microsecond,
+   Nanosecond = doTc(M, F, A),
+   NewSum = Sum + Nanosecond,
    if
       Max == 0 ->
-         NewMax = NewMin = Microsecond;
-      Max < Microsecond ->
-         NewMax = Microsecond,
+         NewMax = NewMin = Nanosecond;
+      Max < Nanosecond ->
+         NewMax = Nanosecond,
          NewMin = Min;
-      Min > Microsecond ->
+      Min > Nanosecond ->
          NewMax = Max,
-         NewMin = Microsecond;
+         NewMin = Nanosecond;
       true ->
          NewMax = Max,
          NewMin = Min
    end,
-   loopTs(Index - 1, M, F, A, LoopTime, NewMax, NewMin, NewSum, [Microsecond | List]).
+   loopTs(Index - 1, M, F, A, LoopTime, NewMax, NewMin, NewSum, [Nanosecond | List]).
 
 
 %% ===================================================================
@@ -84,10 +148,10 @@ tm(ProcCnt, LoopTime, M, F, A) ->
    io:format("execute Mod :~p~n", [M]),
    io:format("execute LoopTime:~p~n", [LoopTime]),
    io:format("execute ProcCnts:~p~n", [ProcCnt]),
-   io:format("MaxTime: ~10s(us) ~10s(s)~n", [integer_to_binary(Max), float_to_binary(Max / 1000000, [{decimals, 6}, compact])]),
-   io:format("MinTime: ~10s(us) ~10s(s)~n", [integer_to_binary(Min), float_to_binary(Min / 1000000, [{decimals, 6}, compact])]),
-   io:format("SumTime: ~10s(us) ~10s(s)~n", [integer_to_binary(Sum), float_to_binary(Sum / 1000000, [{decimals, 6}, compact])]),
-   io:format("AvgTime: ~10s(us) ~10s(s)~n", [float_to_binary(Aver, [{decimals, 6}, compact]), float_to_binary(Aver / 1000000, [{decimals, 6}, compact])]),
+   io:format("MaxTime: ~10s(ns) ~10s(s)~n", [integer_to_binary(Max), float_to_binary(Max / 1000000000, [{decimals, 6}, compact])]),
+   io:format("MinTime: ~10s(ns) ~10s(s)~n", [integer_to_binary(Min), float_to_binary(Min / 1000000000, [{decimals, 6}, compact])]),
+   io:format("SumTime: ~10s(ns) ~10s(s)~n", [integer_to_binary(Sum), float_to_binary(Sum / 1000000000, [{decimals, 6}, compact])]),
+   io:format("AvgTime: ~10s(ns) ~10s(s)~n", [float_to_binary(Aver, [{decimals, 6}, compact]), float_to_binary(Aver / 1000000000, [{decimals, 6}, compact])]),
    io:format("Grar   : ~10s(cn) ~10s(~s)~n", [integer_to_binary(Greater), float_to_binary(Greater / LoopTime, [{decimals, 2}]), <<"%">>]),
    io:format("Less   : ~10s(cn) ~10s(~s)~n", [integer_to_binary(Less), float_to_binary(Less / LoopTime, [{decimals, 2}]), <<"%">>]),
    io:format("=====================~n").
@@ -105,22 +169,22 @@ collector(0, Max, Min, Sum, ProcCnt, List) ->
    {Max, Min, Sum, Aver, Greater, Less};
 collector(Index, Max, Min, Sum, ProcCnt, List) ->
    receive
-      {result, Microsecond} ->
-         NewSum = Sum + Microsecond,
+      {result, Nanosecond} ->
+         NewSum = Sum + Nanosecond,
          if
             Max == 0 ->
-               NewMax = NewMin = Microsecond;
-            Max < Microsecond ->
-               NewMax = Microsecond,
+               NewMax = NewMin = Nanosecond;
+            Max < Nanosecond ->
+               NewMax = Nanosecond,
                NewMin = Min;
-            Min > Microsecond ->
+            Min > Nanosecond ->
                NewMax = Max,
-               NewMin = Microsecond;
+               NewMin = Nanosecond;
             true ->
                NewMax = Max,
                NewMin = Min
          end,
-         collector(Index - 1, NewMax, NewMin, NewSum, ProcCnt, [Microsecond | List])
+         collector(Index - 1, NewMax, NewMin, NewSum, ProcCnt, [Nanosecond | List])
    after 1800000 ->
       io:format("execute time out~n"),
       ok
@@ -135,5 +199,18 @@ loopTm(0, _, _, _, SumTime) ->
 loopTm(LoopTime, M, F, A, SumTime) ->
    Microsecond = doTc(M, F, A),
    loopTm(LoopTime - 1, M, F, A, SumTime + Microsecond).
+
+test(N) ->
+   M1 = erlang:monotonic_time(),
+   timer:sleep(N),
+   M2 = erlang:monotonic_time(),
+   Time = cvrTimeUnit(M2 - M1, native, nanosecond),
+   io:format("IMY******************111 ~p~n", [Time]),
+
+   S1 = erlang:system_time(nanosecond),
+   timer:sleep(N),
+   S2 = erlang:system_time(nanosecond),
+   io:format("IMY******************222 ~p~n", [S2 - S1]).
+
 
 
