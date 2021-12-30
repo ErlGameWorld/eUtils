@@ -9,29 +9,51 @@
 	, isAlpha/1
 ]).
 
-toLowerStr(List) when is_list(List) ->
-	[begin
-		 case C >= $A andalso C =< $Z of
-			 true ->
-				 C + 32;
-			 _ ->
-				 C
-		 end
-	 end || C <- List];
-toLowerStr(Bin) when is_binary(Bin) ->
-	toLowerStr(utTypeCast:toList(Bin)).
+toLowerStr(ListStr) when is_list(ListStr) ->
+	[
+		begin
+			case C >= $A andalso C =< $Z of
+				true ->
+					C + 32;
+				_ ->
+					C
+			end
+		end || C <- ListStr
+	];
+toLowerStr(BinStr) when is_binary(BinStr) ->
+	<<
+		begin
+			case C >= $A andalso C =< $Z of
+				true ->
+					<<(C + 32)>>;
+				_ ->
+					<<C>>
+			end
+		end || <<C:8>> <= BinStr
+	>>.
 
-toUpperStr(List) when is_list(List) ->
-	[begin
-		 case C >= $a andalso C =< $z of
-			 true ->
-				 C - 32;
-			 _ ->
-				 C
-		 end
-	 end || C <- List];
-toUpperStr(Bin) when is_binary(Bin) ->
-	toUpperStr(utTypeCast:toList(Bin)).
+toUpperStr(ListStr) when is_list(ListStr) ->
+	[
+		begin
+			case C >= $a andalso C =< $z of
+				true ->
+					C - 32;
+				_ ->
+					C
+			end
+		end || C <- ListStr
+	];
+toUpperStr(BinStr) when is_binary(BinStr) ->
+	<<
+		begin
+			case C >= $a andalso C =< $z of
+				true ->
+					<<(C - 32)>>;
+				_ ->
+					<<C>>
+			end
+		end || <<C:8>> <= BinStr
+	>>.
 
 -spec isAlpha(Char :: char()) -> boolean().
 isAlpha(Char) ->
@@ -47,22 +69,20 @@ isAlphaNum(Char) ->
 	isAlpha(Char) orelse isNum(Char).
 
 %% 字符加密
-check_char_encrypt(Id, Time, TK) ->
+checkEncrypt(Id, Time, TK) ->
 	TICKET = "7YnELt8MmA4jVED7",
 	Hex = utMd5:getMd5HexBin(lists:concat([Time, Id, TICKET])),
-	%NowTime = time:unixtime(),
-	%Hex =:= TK andalso NowTime - Time >= -10 andalso NowTime - Time < 300.
-	Hex =:= TK.
-
+	NowTime = utTime:now(),
+	Hex =:= TK andalso NowTime - Time >= -10 andalso NowTime - Time < 300.
 
 %% Function: 检查客户端发过来的内容,false为不合法,true为合法
-%% @param: String: 客户端发来的字符串
+%% @param: String: 客户端发来的字符串 格式为binary
 %% @param: Length: 服务端限制的字符串长度
-check_string(String, Length) ->
-	case check_length(String, Length) of
+checkValid(BinStr, Length) ->
+	case checkLen(BinStr, Length) of
 		true ->
-			not check_keyword(String, ["'", "/", "\"", "_", "<", ">"]);
-		false ->
+			not checkKeyword(BinStr, ["'", "/", "\"", "_", "<", ">"]);
+		_ ->
 			false
 	end.
 
@@ -70,21 +90,21 @@ check_string(String, Length) ->
 %% @spec check_keyword(Text, Words) -> false | true
 %% @param Text : 需要检查的字符串（或字符串的二进制形式）
 %% @param Words: 非法字符列表
-check_keyword(_, []) ->
+checkKeyword(_, []) ->
 	false;
-check_keyword(Text, [Word | Words]) ->
+checkKeyword(Text, [Word | Words]) ->
 	case re:run(Text, Word, [{capture, none}]) of
-		match ->
-			true;
 		nomatch ->
-			check_keyword(Text, Words)
+			checkKeyword(Text, Words);
+		_ ->
+			true
 	end.
 
 %% 长度合法性检查
-check_length(Item, LenLimit) ->
-	check_length(Item, 1, LenLimit).
+checkLen(BinStr, LenLimit) ->
+	checkLen(BinStr, 1, LenLimit).
 
-check_length(Item, MinLen, MaxLen) ->
+checkLen(BinStr, MinLen, MaxLen) ->
 	% case asn1rt:utf8_binary_to_list(list_to_binary(Item)) of
 	%     {ok, UnicodeList} ->
 	%         Len = string_width(UnicodeList),
@@ -92,7 +112,8 @@ check_length(Item, MinLen, MaxLen) ->
 	%     {error, _Reason} ->
 	%         false
 	% end.
-	case unicode:characters_to_list(list_to_binary(Item)) of
+	% case unicode:characters_to_list(list_to_binary(BinStr)) of
+	case unicode:characters_to_list(BinStr) of
 		UnicodeList when is_list(UnicodeList) ->
 			Len = string_width(UnicodeList),
 			Len =< MaxLen andalso Len >= MinLen;
@@ -146,16 +167,16 @@ listToUtfString(List) ->
 %% desc   获取字符串汉字和非汉字的个数
 %% parm   UTF8String  			UTF8编码的字符串
 %% return {汉字个数,非汉字个数}
-getChineseNum(UTF8String) ->
+getChineseCnt(UTF8String) ->
 	UnicodeList = unicode:characters_to_list(list_to_binary(UTF8String)),
-	Fun = fun(Num, {Sum}) ->
+	Fun = fun(Num, Sum) ->
 		case Num >= ?UNICODE_CHINESE_BEGIN andalso Num =< ?UNICODE_CHINESE_END of
 			true ->
-				{Sum + 1};
+				Sum + 1;
 			false ->
-				{Sum}
+				Sum
 		end
 			end,
-	{ChineseCount} = lists:foldl(Fun, {0}, UnicodeList),
+	ChineseCount = lists:foldl(Fun, 0, UnicodeList),
 	OtherCount = length(UnicodeList) - ChineseCount,
 	{ChineseCount, OtherCount}.

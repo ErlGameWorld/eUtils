@@ -7,7 +7,6 @@ write(N) ->
    HandStr = makeStr(N, Head),
    ok = file:write_file("./genCfg/utTestCfg" ++ integer_to_list(N) ++ ".erl", HandStr).
 
-
 makeStr(0, BinStr) ->
    <<BinStr/binary, "hand(_) -> undefined.">>;
 makeStr(N, BinStr) ->
@@ -21,7 +20,6 @@ write2(N) ->
    HandStr = makeStr2(N, Head),
    ok = file:write_file("./genCfg/utTestHand" ++ integer_to_list(N) ++ ".erl", HandStr).
 
-
 makeStr2(0, BinStr) ->
    <<BinStr/binary, "hand(_, _) -> undefined.">>;
 makeStr2(N, BinStr) ->
@@ -30,6 +28,27 @@ makeStr2(N, BinStr) ->
    Str = <<"hand(test", (integer_to_binary(N))/binary, ", {test", (integer_to_binary(N))/binary, ", ", VStr/binary, "V100}) ->\n\t", (integer_to_binary(N))/binary, ";\n">>,
    makeStr2(N - 1, <<BinStr/binary, Str/binary>>).
 
+writeGet(N) ->
+   Head = <<"-module(utTestGet", (integer_to_binary(N))/binary, ").\n-compile([export_all, nowarn_function, nowarn_unused_vars, nowarn_export_all]).\n\n">>,
+   HandStr = makeStrGet(1, N, Head),
+   ok = file:write_file("./genCfg/utTestGet" ++ integer_to_list(N) ++ ".erl", HandStr).
+
+makeStrGet(Index, N, BinStr) when Index > N ->
+   <<BinStr/binary, "hand(_) -> undefined.">>;
+makeStrGet(Index, N, BinStr) ->
+   Str = <<"hand(", (integer_to_binary(Index))/binary, ") -> ", (integer_to_binary(Index))/binary, ";\n">>,
+   makeStrGet(Index + 1, N, <<BinStr/binary, Str/binary>>).
+
+writeWhen(N) ->
+   Head = <<"-module(utTestWhen", (integer_to_binary(N))/binary, ").\n-compile([export_all, nowarn_function, nowarn_unused_vars, nowarn_export_all]).\n\n">>,
+   HandStr = makeStrWhen(1, N, Head),
+   ok = file:write_file("./genCfg/utTestWhen" ++ integer_to_list(N) ++ ".erl", HandStr).
+
+makeStrWhen(Index, N, BinStr) when Index > N ->
+   <<BinStr/binary, "hand(_) -> undefined.">>;
+makeStrWhen(Index, N, BinStr) ->
+   Str = <<"hand(X) when X < ", (integer_to_binary(Index))/binary, " -> ", (integer_to_binary(Index))/binary, ";\n">>,
+   makeStrWhen(Index + 1, N, <<BinStr/binary, Str/binary>>).
 
 call1(N, Y) ->
    KVList = [{{value, test, Index, Index}, {value, test, Index, Index + 2}} || Index <- lists:seq(1, Y)],

@@ -491,7 +491,7 @@ remote_load(Mod) -> remote_load(nodes(), Mod).
       Nodes :: [node(),...] | node().
 remote_load(Nodes=[_|_], Mod) when is_atom(Mod) ->
     {Mod, Bin, File} = code:get_object_code(Mod),
-    rpc:multicall(Nodes, code, load_binary, [Mod, File, Bin]);
+    erpc:multicall(Nodes, code, load_binary, [Mod, File, Bin]);
 remote_load(Nodes=[_|_], Modules) when is_list(Modules) ->
     [remote_load(Nodes, Mod) || Mod <- Modules];
 remote_load(Node, Mod) ->
@@ -689,7 +689,7 @@ rpc(Nodes, Fun) ->
 %% @doc Runs an arbitrary fun (of arity 0) over one or more nodes.
 -spec rpc(node()|[node(),...], fun(() -> term()), timeout()) -> {[Success::_],[Fail::_]}.
 rpc(Nodes=[_|_], Fun, Timeout) when is_function(Fun,0) ->
-    rpc:multicall(Nodes, erlang, apply, [Fun,[]], Timeout);
+    erpc:multicall(Nodes, erlang, apply, [Fun,[]], Timeout);
 rpc(Node, Fun, Timeout) when is_atom(Node) ->
     rpc([Node], Fun, Timeout).
 
@@ -707,7 +707,7 @@ named_rpc(Nodes, Fun) ->
 %% name of the node that computed a given result along with it, in a tuple.
 -spec named_rpc(node()|[node(),...], fun(() -> term()), timeout()) -> {[Success::_],[Fail::_]}.
 named_rpc(Nodes=[_|_], Fun, Timeout) when is_function(Fun,0) ->
-    rpc:multicall(Nodes, erlang, apply, [fun() -> {node(),Fun()} end,[]], Timeout);
+    erpc:multicall(Nodes, erlang, apply, [fun() -> {node(),Fun()} end,[]], Timeout);
 named_rpc(Node, Fun, Timeout) when is_atom(Node) ->
     named_rpc([Node], Fun, Timeout).
 

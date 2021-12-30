@@ -16,7 +16,7 @@ start(Num, Pid) ->
    Time5 = erlang:monotonic_time(),
    delete(Num, NewDsF),
    Time6 = erlang:monotonic_time(),
-   erlang:send(Pid, {over, self(), Time2 - Time1, Time3 - Time2, Time4 - Time3, Time5 - Time4, Time6 - Time5, no_size}),
+   erlang:send(Pid, {over, self(), Time2 - Time1, Time3 - Time2, Time4 - Time3, Time5 - Time4, Time6 - Time5, ets:info(Ds, memory)}),
    exit(normal).
 
 init(_Num) ->

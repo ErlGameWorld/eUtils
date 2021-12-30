@@ -67,7 +67,7 @@ kf_load_beam(Files) ->
    Modules = [list_to_atom(filename:basename(File, ".erl")) || File <- Files],
    case nodes(connected) of
       [Node | _] ->
-         rpc:cast(Node, ?MODULE, kf_load_beam_all_server_in_local_node, [Modules]);
+         erpc:cast(Node, ?MODULE, kf_load_beam_all_server_in_local_node, [Modules]);
       _ ->
          skip
    end,
@@ -91,7 +91,7 @@ nodes_load(Modules) ->
    catch load(Modules),
    % 连接的其他节点加载代码
    ContenctedNodes = nodes(connected),
-   [rpc:cast(Node, ?MODULE, load, [Modules]) || Node <- ContenctedNodes].
+   [erpc:cast(Node, ?MODULE, load, [Modules]) || Node <- ContenctedNodes].
 
 load(Modules) -> [c:nl(M) || M <- Modules].
 

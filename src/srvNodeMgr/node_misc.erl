@@ -41,7 +41,7 @@ cookie_hash() ->
    base64:encode_to_string(erlang:md5(atom_to_list(erlang:get_cookie()))).
 
 is_running(Node, Application) ->
-   case rpc:call(Node, app_utils, which_applications, []) of
+   case erpc:call(Node, app_utils, which_applications, []) of
       {badrpc, _} ->
          false;
       Apps ->
@@ -49,7 +49,7 @@ is_running(Node, Application) ->
    end.
 
 is_process_running(Node, Process) ->
-   case rpc:call(Node, erlang, whereis, [Process]) of
+   case erpc:call(Node, erlang, whereis, [Process]) of
       {badrpc, _} ->
          false;
       undefined ->

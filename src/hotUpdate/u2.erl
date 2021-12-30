@@ -62,7 +62,7 @@ u(S) when is_number(S) ->
    case file:list_dir(".") of
       {ok, FileList} ->
          Files = get_new_file(FileList, util:ceil(S * 60) + 3),
-         AllZone = svr_node:get_all_node(),
+         AllZone = nodeMgrSrv:get_all_node(),
          info("---------modules---------~n~w~n----------nodes----------", [Files]),
          load(Files),
          loads(AllZone, Files);
@@ -70,7 +70,7 @@ u(S) when is_number(S) ->
          info("Error Dir: ~w", [Any])
    end;
 u(Files) when is_list(Files) ->
-   AllZone = svr_node:get_all_node(),
+   AllZone = nodeMgrSrv:get_all_node(),
    info("---------modules---------~n~w~n----------nodes----------", [Files]),
    load(Files),
    loads(AllZone, Files);
@@ -99,7 +99,7 @@ info(V, P) ->
 loads([], _Files) -> ok;
 loads([H | T], Files) ->
    info("[~w]", [H]),
-   rpc:cast(H, u, load, [Files]),
+   erpc:cast(H, u, load, [Files]),
    loads(T, Files).
 
 get_new_file(Files, S) ->

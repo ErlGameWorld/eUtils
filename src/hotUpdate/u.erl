@@ -116,7 +116,7 @@ info(V, P) ->
 loads([], _Files) -> ok;
 loads([H | T], Files) ->
    info("[~w]", [H#server.node]),
-   rpc:cast(H#server.node, u, load, [Files]),
+   erpc:cast(H#server.node, u, load, [Files]),
    loads(T, Files).
 
 get_new_file(Files, S) ->

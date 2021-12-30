@@ -36,7 +36,7 @@ is_process_alive(Pid) ->
             Node = node(),
             Result = case node(Pid) of
                         Node -> erlang:is_process_alive(Pid);
-                        Node1 -> rpc:call(Node1, erlang, is_process_alive, [Pid])
+                        Node1 -> erpc:call(Node1, erlang, is_process_alive, [Pid])
                      end,
             case Result of
                {badrpc, _Reason} -> false;

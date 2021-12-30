@@ -167,7 +167,7 @@ show(N) ->
 	F = fun(P) ->
 		case catch process_info(P, [memory, dictionary]) of
 			[{_, Memory}, {_, Dict}] ->
-				InitStart = util:prop_get_value('$initial_call', Dict, null),
+				InitStart = utList:getListVal('$initial_call', Dict, null),
 				{InitStart, Memory};
 			_ -> {null, 0}
 		end
@@ -184,7 +184,7 @@ show(N, SkipNames) ->
 	F = fun(P) ->
 		case catch process_info(P, [memory, dictionary]) of
 			[{_, Memory}, {_, Dict}] ->
-				InitStart = util:prop_get_value('$initial_call', Dict, null),
+				InitStart = utList:getListVal('$initial_call', Dict, null),
 				case catch tuple_to_list(InitStart) of
 					[Name | _] ->
 						case lists:member(Name, SkipNames) of
@@ -208,7 +208,7 @@ show1(N) ->
 	F = fun(P, Acc) ->
 		case catch process_info(P, [memory, dictionary]) of
 			[{_, Memory}, {_, Dict}] ->
-				InitStart = util:prop_get_value('$initial_call', Dict, null),
+				InitStart = utList:getListVal('$initial_call', Dict, null),
 				case lists:keyfind(InitStart, 1, Acc) of
 					false -> [{InitStart, Memory, 1} | Acc];
 					{InitStart, Memory1, Num} -> lists:keystore(InitStart, 1, Acc, {InitStart, Memory + Memory1, Num + 1})

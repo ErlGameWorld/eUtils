@@ -98,7 +98,7 @@ info(V, P) ->
 %% loads([], _Files) -> ok;
 %% loads([H | T], Files) ->
 %%     info("[~w]", [H#t_server_node.node]),
-%%     rpc:cast(H#t_server_node.node, u, load, [Files]),
+%%     erpc:cast(H#t_server_node.node, u, load, [Files]),
 %%     loads(T, Files).
 
 get_new_file(Files, S) ->
@@ -155,7 +155,7 @@ a() ->
 hotswap(NodeArg) ->
    Node = util_data:to_atom(hd(NodeArg)),
    net_adm:ping(Node),
-   rpc:call(Node, ?MODULE, do_hotswap, []).
+   erpc:call(Node, ?MODULE, do_hotswap, []).
 
 do_hotswap() ->
    CommandFile = "../../hotswap/hotswap_command.txt",

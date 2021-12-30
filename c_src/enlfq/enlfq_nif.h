@@ -1,5 +1,6 @@
 #pragma once
 #include "erl_nif.h"
+#include<string.h>
 
 struct atoms
 {

@@ -10,6 +10,24 @@
 
 -compile([export_all, nowarn_export_all]).
 
+-spec getListVal(term(), list()) -> term().
+getListVal(Key, List) ->
+   case lists:keyfind(Key, 1, List) of
+      {_Key, Value} ->
+         Value;
+      _ ->
+         undefined
+   end.
+
+-spec getListVal(term(), list(), term()) -> term().
+getListVal(Key, List, Default) ->
+   case lists:keyfind(Key, 1, List) of
+      {_Key, Value} ->
+         Value;
+      _ ->
+         Default
+   end.
+
 while(Fun, CurData) ->
    case Fun(CurData) of
       ?BREAK -> CurData;

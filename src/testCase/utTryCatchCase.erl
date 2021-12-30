@@ -1,7 +1,16 @@
 -module(utTryCatchCase).
 
 -compile([export_all, nowarn_unused_function, nowarn_unused_vars, nowarn_export_all]).
--export([loopTest/4, testTryCatch/1, testTryCatch/2, testCatch/1, testCatch/2, testTryCatch2/1, testTryCatch2/2]).
+
+-export([
+   loopTest/4
+   , testTryCatch/1
+   , testTryCatch/2
+   , testCatch/1
+   , testCatch/2
+   , testTryCatch2/1
+   , testTryCatch2/2
+]).
 
 t1() ->
    Pid = spawn(fun() -> do_t1(1) end),
@@ -26,7 +35,7 @@ do_t1(N) ->
          erlang:garbage_collect(),
          Result = erlang:process_info(self(), [memory, garbage_collection]),
          io:format("IMY************************* ~p~n  ~w ~n", [N, Result]);
-      %io:format("IMY&&&&&&&&&&&&&&&&&&&&&&&&& ~p~n backtrace:~p~n~n", [N, erlang:process_display(self(), backtrace)]);
+         %io:format("IMY&&&&&&&&&&&&&&&&&&&&&&&&& ~p~n backtrace:~p~n~n", [N, erlang:process_display(self(), backtrace)]);
       _ ->
          ignore
    end,
@@ -217,7 +226,14 @@ loopTest(Times, Fun, Type, IsLoop) ->
    ?MODULE:Fun(Type, IsLoop),
    loopTest(Times - 1, Fun, Type, IsLoop).
 
-testTryCatch(Type) -> testTryCatch(Type, false).
+testNoCatch(Type) ->
+   testNoCatch(Type, false).
+
+testNoCatch(Type, _TestLoop) ->
+   makeException(Type).
+
+testTryCatch(Type) ->
+   testTryCatch(Type, false).
 
 testTryCatch(Type, TestLoop) ->
    try
@@ -230,7 +246,8 @@ testTryCatch(Type, TestLoop) ->
          end
    end.
 
-testTryCatch2(Type) -> testTryCatch(Type, false).
+testTryCatch2(Type) ->
+   testTryCatch2(Type, false).
 
 testTryCatch2(Type, TestLoop) ->
    try
@@ -264,6 +281,9 @@ testCatch(Type, TestLoop) ->
 
 
 makeException(Type) ->
+   utStrace1:test(Type).
+
+makeException2(Type) ->
    case Type of
       throw -> erlang:throw(test);
       error -> erlang:error(test);

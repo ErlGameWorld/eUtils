@@ -574,5 +574,70 @@ load2(N, List) ->
    utStrToBeam:load(load2, [{get, 1}], binary_to_list(LastStr)),
    load2(N - 1, List).
 
+etsT(Cnt, Num) ->
+   Tab = ets:new(test, [ordered_set]),
+   etsInsert(Num, Tab),
+   etsT(Cnt, {50000, Num div 2}, Tab),
+   ets:delete(Tab).
+
+-record(etsT, {id, v1, v2}).
+
+etsInsert(0, Tab) ->
+   ets:insert(Tab, {etsT, 50000, 500, 5001}),
+   ok;
+etsInsert(N, Tab) ->
+   ets:insert(Tab, {etsT, N, N, N + 1}),
+   etsInsert(N - 1, Tab).
+
+-include_lib("stdlib/include/ms_transform.hrl").
+etsT(Cnt, Key, Tab) ->
+   Ms = ets:fun2ms(fun({K, _V}) when Key > K -> true end),
+   utTc:ts(Cnt, ets, select_count, [Tab, Ms]).
+
+etsM(Cnt, Num, Key) ->
+   case ets:info(test, size) of
+      undefined ->
+         ets:new(test, [named_table, {keypos, #etsT.id}, set]),
+         etsInsert(Num, test);
+      _ ->
+         ignore
+   end,
+   etsM(Cnt, Key).
+
+etsM(Cnt, Key) ->
+   utTc:ts(Cnt, ets, match, [test, #etsT{id = Key, v1 = '$1', v2 = '$2'}]),
+   ets:match(test, #etsT{id = Key, v1 = '$1', v2 = '$2'}).
+
+
+lMakeList(0, Acc) ->
+   Acc;
+lMakeList(Num, Acc) ->
+   NewAcc = [{rand:uniform(1000000), rand:uniform(1000000), rand:uniform(1000000)} | Acc],
+   lMakeList(Num - 1, NewAcc).
+
+lSort(Cnt, Num) ->
+   SList = lMakeList(Num, []),
+   utTc:ts(Cnt, lists, sort, [SList]).
+
+bp(0, _Str) ->
+   ok;
+bp(Cnt, Str) ->
+   binary:split(Str, <<"~">>),
+   bp(Cnt - 1, Str).
+
+
+bp1(Cnt, Str) ->
+   Pt = binary:compile_pattern(<<"~">>),
+   persistent_term:put(aaaaa, Pt),
+   bp11(Cnt, Str).
+
+bp11(0, _Str) ->
+   ok;
+bp11(Cnt, Str) ->
+   binary:split(Str, persistent_term:get(aaaaa)),
+   bp11(Cnt - 1, Str).
+
+
+
 
 

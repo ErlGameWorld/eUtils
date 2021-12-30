@@ -19,7 +19,7 @@ load(ModList) ->
 %% @param ModList 模块列表(原子列表)         
 network_load(ModList) ->
    lists:foreach(fun(Module) ->
-      [begin rpc:call(Node, code, purge, [Module]), rpc:call(Node, code, load_file, [Module]) end || Node <- (nodes() ++ [node()])]
+      [begin erpc:call(Node, code, purge, [Module]), erpc:call(Node, code, load_file, [Module]) end || Node <- (nodes() ++ [node()])]
                  end, ModList).
 
 %% 指定单节点热更：
@@ -28,8 +28,8 @@ network_load(ModList) ->
 network_load(NodeList, ModList) ->
    lists:foreach(fun(Node) ->
       lists:foreach(fun(Module) ->
-         rpc:call(Node, code, purge, [Module]),
-         rpc:call(Node, code, load_file, [Module])
+         erpc:call(Node, code, purge, [Module]),
+         erpc:call(Node, code, load_file, [Module])
                     end, ModList)
                  end, NodeList).
 

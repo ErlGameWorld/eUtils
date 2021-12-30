@@ -11,7 +11,7 @@ main(_Args) ->
          io:format("the aims server:~p is online~n", [?AIM_NODE]),
          io:format("to close it~n"),
          timer:sleep(10000),
-         rpc:call(?AIM_NODE, init, stop, []),
+         erpc:call(?AIM_NODE, init, stop, []),
          halt(0);
       _ ->
          io:format("the aims server:~p is online~n", [?AIM_NODE]),
