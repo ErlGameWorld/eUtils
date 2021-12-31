@@ -47,8 +47,8 @@ cvrTimeUnit(Time, FromUnit, ToUnit) ->
          case FromUnit of
             native -> erts_internal:time_unit();
             perf_counter -> erts_internal:perf_counter_unit();
-            nanosecond -> 1000 * 1000 * 1000;
-            microsecond -> 1000 * 1000;
+            nanosecond -> 1000000000;
+            microsecond -> 1000000;
             millisecond -> 1000;
             second -> 1
          end,
@@ -56,8 +56,8 @@ cvrTimeUnit(Time, FromUnit, ToUnit) ->
          case ToUnit of
             native -> erts_internal:time_unit();
             perf_counter -> erts_internal:perf_counter_unit();
-            nanosecond -> 1000 * 1000 * 1000;
-            microsecond -> 1000 * 1000;
+            nanosecond -> 1000000000;
+            microsecond -> 1000000;
             millisecond -> 1000;
             second -> 1
          end,
