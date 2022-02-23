@@ -164,6 +164,35 @@ listToUtfString(List) ->
 % (9 * 16 * 16 * 16 + 15 * 16 * 16 + 10 * 16 + 5)
 -define(UNICODE_CHINESE_END, 16#9fa5).
 
+%  中文字符范围
+%  双字节字符编码范围：
+%
+%  1. GBK (GB2312/GB18030)
+%
+%  \x00-\xff GBK双字节编码范围
+%  \x20-\x7f ASCII
+%  \xa1-\xff 中文gb2312
+%  \x80-\xff 中文 gbk
+%
+%  2. UTF-8 (Unicode)
+%
+%  \u4e00-\u9fa5 (中文)
+%  \x3130-\x318F (韩文)
+%  \xAC00-\xD7A3 (韩文)
+%  \u0800-\u4e00 (日文)
+
+cn(Str) ->
+	re:run(Str, "[\x{4e00}-\x{9fa5}]+", [unicode]).
+
+jp(Str) ->
+	re:run(Str, "[\x{0800}-\x{4e00}]+", [unicode]).
+
+sk1(Str) ->
+	re:run(Str, "[\x{3130}-\x{318F}]+", [unicode]).
+
+sk2(Str) ->
+	re:run(Str, "[\x{AC00}-\x{D7A3}]+", [unicode]).
+
 %% desc   获取字符串汉字和非汉字的个数
 %% parm   UTF8String  			UTF8编码的字符串
 %% return {汉字个数,非汉字个数}

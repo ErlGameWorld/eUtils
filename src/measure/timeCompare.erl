@@ -1,4 +1,4 @@
--module(test).
+-module(timeCompare).
 
 -export([
    time_compare/2,

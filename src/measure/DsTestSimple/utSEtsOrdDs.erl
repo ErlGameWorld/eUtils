@@ -20,7 +20,7 @@ start(Num, Pid) ->
    exit(normal).
 
 init(_Num) ->
-   ets:new(test, [ordered_set]).
+   ets:new(test_order, [ordered_set, public, {write_concurrency, true}]).
 
 insert(0, Ds) ->
    Ds;

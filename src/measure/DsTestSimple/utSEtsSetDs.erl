@@ -1,6 +1,6 @@
 -module(utSEtsSetDs).
 -compile([nowarn_unused_function, nowarn_unused_vars, nowarn_export_all]).
-
+-compile([export_all]) .
 -export([start/2]).
 
 start(Num, Pid) ->
@@ -20,7 +20,7 @@ start(Num, Pid) ->
    exit(normal).
 
 init(_Num) ->
-   ets:new(test, [set]).
+   ets:new(test_ets, [set, public, {write_concurrency, true}]).
 
 insert(0, Ds) ->
    Ds;

@@ -1,8 +1,5 @@
--module(utSEnlfqDs).
+-module(utSShq2Ds).
 -compile([nowarn_unused_function, nowarn_unused_vars, nowarn_export_all]).
-
-
--compile([export_all]).
 
 -export([start/2]).
 
@@ -23,19 +20,20 @@ start(Num, Pid) ->
    exit(normal).
 
 init(_Num) ->
-   {ok, Ds} = enlfq:new(),
-   Ds.
+   {ok, Pid} = shq2:start(),
+   Pid.
+
 
 insert(0, Ds) ->
    Ds;
 insert(Num, Ds) ->
-   enlfq:push(Ds, Num),
+   shq2:in(Ds, Num),
    insert(Num - 1, Ds).
 
 read(0, Ds) ->
    Ds;
 read(Num, Ds) ->
-   Value = enlfq:pop(Ds),
+   shq2:out_r(Ds),
    read(Num - 1, Ds).
 
 update(Num, Ds) ->

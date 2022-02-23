@@ -84,7 +84,7 @@ do_t3(N) ->
          ignore
    end,
 
-   try test:tt9(2) of
+   try recon_test:tt9(2) of
       Ret ->
          desult3(N - 1, Ret)
    catch
@@ -104,7 +104,7 @@ do_t4(N) ->
          %io:format("IMY************************* ~p ~n", [N]),
          ignore
    end,
-   Ret1 = try test:tt9(2) of
+   Ret1 = try recon_test:tt9(2) of
              Ret ->
                 Ret
           catch
@@ -126,7 +126,7 @@ do_t5(N) ->
          %io:format("IMY************************* ~p ~n", [N]),
          ignore
    end,
-   try test:tt9(2) of
+   try recon_test:tt9(2) of
       Ret ->
          do_t5(N - 1)
    catch
@@ -147,7 +147,7 @@ do_t6(N) ->
          %io:format("IMY************************* ~p ~n", [N]),
          ignore
    end,
-   try test:tt9(2) of
+   try recon_test:tt9(2) of
       Ret ->
          do_t6(N - 1)
    catch
@@ -161,7 +161,7 @@ do_t7(0) ->
    io:format("IMy********************11111");
 do_t7(N) ->
    io:format("IMy********************22222"),
-   try test:tt9(2) of
+   try recon_test:tt9(2) of
       _Ret ->
          io:format("IMy********************3333"),
          do_t7(N - 1)
