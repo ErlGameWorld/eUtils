@@ -1,7 +1,8 @@
 -module(bStar).         %% B星寻路逻辑
 -include("utComMisc.hrl").
 
--compile(export_all).
+-compile([nowarn_unused_function, nowarn_unused_vars, nowarn_export_all]).
+
 -export([
    bstar_search/5
    , test/0

@@ -2,6 +2,9 @@
 
 -include("utComMisc.hrl").
 
+-compile([nowarn_unused_function, nowarn_unused_vars, nowarn_export_all]).
+
+
 -export([
 	vmInfo/0							%% 打印虚拟机简略信息
 	, processInfo/1				%% 打印进程简略信息

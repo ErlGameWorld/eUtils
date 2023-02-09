@@ -8,4 +8,4 @@ load(Module, Export, Str) ->
    {ok, Forms} = erl_parse:parse_form(Tokens),
    NewForms = [{attribute, 1, module, Module}, {attribute, 2, export, Export}, Forms],
    {ok, _, Binary} = compile:forms(NewForms),
-   code:load_binary(Module, "", Binary).
+   code:load_binary(Module, [], Binary).

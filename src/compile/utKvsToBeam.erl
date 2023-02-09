@@ -13,17 +13,17 @@ load(Module, KVs) ->
    Forms = forms(Module, KVs),
    {ok, Module, Bin} = compile:forms(Forms),
    code:soft_purge(Module),
-   {module, Module} = code:load_binary(Module, atom_to_list(Module), Bin),
+   {module, Module} = code:load_binary(Module, [], Bin),
    ok.
 
 forms(Module, KVs) ->
    %% -module(Module).
    Mod = erl_syntax:attribute(erl_syntax:atom(module), [erl_syntax:atom(Module)]),
-   %% -export([get/0]).
-   ExportList = [erl_syntax:arity_qualifier(erl_syntax:atom(get), erl_syntax:integer(1))],
+   %% -export([getV/0]).
+   ExportList = [erl_syntax:arity_qualifier(erl_syntax:atom(getV), erl_syntax:integer(1))],
    Export = erl_syntax:attribute(erl_syntax:atom(export), [erl_syntax:list(ExportList)]),
-   %% get(K) -> V
-   Function = erl_syntax:function(erl_syntax:atom(get), lookup_clauses(KVs, [])),
+   %% getV(K) -> V
+   Function = erl_syntax:function(erl_syntax:atom(getV), lookup_clauses(KVs, [])),
    [erl_syntax:revert(X) || X <- [Mod, Export, Function]].
 
 lookup_clause(Key, Value) ->

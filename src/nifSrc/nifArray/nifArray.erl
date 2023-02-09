@@ -39,11 +39,11 @@ get(_Ref, _Index) ->
 put(_Ref, _Index, _Value) ->
    erlang:nif_error({nif_not_loaded, module, ?MODULE, line, ?LINE}).
 
-test(Value) ->
+test(_Value) ->
    erlang:nif_error({nif_not_loaded, module, ?MODULE, line, ?LINE}).
 
 test1(Value) ->
    Bin = term_to_binary(Value),
-   Term = binary_to_term(Bin).
+   binary_to_term(Bin).
 
 

@@ -12,6 +12,7 @@
    genTuple/1,
    genList/1,
    genShortString/1,
+   genString/0,
    genString/1,
    genBinary/1,
    genBitstring/1,

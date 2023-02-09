@@ -1,5 +1,6 @@
 -module(ut_gen_srv).
--behaviour(ut_gen_srv).
+
+% -behaviour(gen_srv).
 
 -compile(inline).
 -compile({inline_size, 128}).

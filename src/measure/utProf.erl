@@ -1,6 +1,6 @@
 -module(utProf).
 
-
+-compile([nowarn_unused_function, nowarn_unused_vars, nowarn_export_all]).
 
 % 对整个节点内所有进程执行eprof, eprof 对线上业务有一定影响,慎用!
 % 建议TimeoutSec<10s，且进程数< 1000，否则可能导致节点crash

@@ -12,7 +12,7 @@
 %-define(V_NUM, [8, 16, 32, 64, 128, 256, 516, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 524288, 1048576]).
 -define(V_NUM, [8, 16, 32, 64, 128, 256, 516, 1024, 2048, 4096, 8192, 16384]).
 % -define(DsList, [utSPdDs, utSTupleDs, utSListsDs, utSMapsDs, utSQueueDs, utSUtFifoDs, utSUtLifoDs, utSEnlfqDs, utSeLfqDs, utSEtsSetDs, utSEtsOrdDs, utSArrayDs, utSDictDs, utSGb_treesDs, utSSetsDs, utSGb_setsDs, utSOrddictDs, utSOrdsetsDs]).
--define(DsList, [utSPdDs, utSTupleDs, utSMapsDs, utSEtsSetDs, utSEtsOrdDs, utSQueueDs, utSUtFifoDs, utSUtLifoDs, utSFwQueueDs, utSShqDs, utSShq2Ds]).
+-define(DsList, [utSPdDs, utSTupleDs, utSListsDs, utSMapsDs, utSQueueDs, utSArrayDs, utSEtsSetDs, utSEtsOrdDs, utSeLfqDs, utSDictDs, utSGb_treesDs, utSSetsDs, utSGb_setsDs, utSOrddictDs, utSOrdsetsDs]).
 
 -define(Cnt, 12).
 
@@ -90,7 +90,7 @@ cvrTUnit(not_support) ->
 cvrTUnit(skip) ->
    skip;
 cvrTUnit(Time) ->
-   utTc:cvrTimeUnit(Time, native, nanosecond).
+   erlang:convert_time_unit(Time, native, nanosecond).
 
 timeToStr(not_support) ->
    <<"noSupport">>;

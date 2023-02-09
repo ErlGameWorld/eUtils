@@ -24,7 +24,7 @@ startApp(App, Type) ->
 
 startRely(ok, _App, _Type) ->
    ok;
-startRely({error, {already_started, _App}}, _App, _Type) ->
+startRely({error, {already_started, _App}}, _, _Type) ->
    ok;
 startRely({error, {not_started, Rely}}, App, Type) ->
    ok = start(Rely, Type),

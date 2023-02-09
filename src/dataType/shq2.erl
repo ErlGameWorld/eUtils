@@ -59,10 +59,10 @@ handle_call(out, _From, State=#state{front=K, rear=K}) ->
 	{reply, empty, State};
 handle_call(out_r, _From, State=#state{front=K, rear=K}) ->
 	{reply, empty, State};
-handle_call(out, _From, State=#state{tab=Tab, front=KF}) ->
+handle_call(out, _From, State=#state{front=KF}) ->
 	V=erase(KF),
 	{reply, {ok, V}, State#state{front=KF+1}};
-handle_call(out_r, _From, State=#state{tab=Tab, rear=KR0}) ->
+handle_call(out_r, _From, State=#state{rear=KR0}) ->
 	KR1=KR0-1,
 	V=erase(KR1),
 	{reply, {ok, V}, State#state{rear=KR1}};
@@ -71,10 +71,10 @@ handle_call(size, _From, State=#state{front=KF, rear=KR}) ->
 handle_call(_Msg, _From, State) ->
 	{noreply, State}.
 
-handle_cast({in, V}, State=#state{tab=Tab, rear=KR}) ->
+handle_cast({in, V}, State=#state{rear=KR}) ->
 	put(KR, V),
 	{noreply, State#state{rear=KR+1}};
-handle_cast({in_r, V}, State=#state{tab=Tab, front=KF0}) ->
+handle_cast({in_r, V}, State=#state{front=KF0}) ->
 	KF1=KF0-1,
 	put(KF1, V),
 	{noreply, State#state{front=KF1}};

@@ -1,7 +1,6 @@
 -module(utPid).
-%%
-%% Exported Functions
-%%
+-compile([nowarn_unused_function, nowarn_unused_vars, nowarn_export_all]).
+
 -export([
    whereis_name/1,
    register/3,

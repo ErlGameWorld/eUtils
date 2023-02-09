@@ -1,9 +1,6 @@
 -module(utHttpOn).
 
 %% API
--export([]).
-
-%% API
 -export([
    req/6,      %% Post, Put, Delete Only
    req_get/3,  %% Get Only
@@ -21,7 +18,7 @@ get_unique_ref(Length) ->
 random_num(NumeralSystemBase, Length) ->
    Min = round(math:pow(NumeralSystemBase, Length - 1)),
    Max = round(math:pow(NumeralSystemBase, Length)),
-   crypto:rand_uniform(Min, Max).
+   rand:uniform(Min, Max).
 
 req(Method, Url, Headers, ContType, Body, HttpOpts)
    when Method == post orelse Method == put orelse Method == delete ->

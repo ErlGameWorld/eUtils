@@ -230,9 +230,6 @@ ht(N, Fun) ->
    [?MODULE:Fun(Term) || Term <- ?List],
    ht(N - 1, Fun).
 
-hash1(Term) ->
-   erlang:phash(Term, 256).
-
 hash2(Term) ->
    erlang:phash2(Term, 256).
 
@@ -250,9 +247,6 @@ ht1(0, _Fun, Term) ->
 ht1(N, Fun, Term) ->
    ?MODULE:Fun(Term),
    ht1(N - 1, Fun, Term).
-
-hash3(Term) ->
-   erlang:phash(Term, 256).
 
 hash4(Term) ->
    erlang:phash2(Term, 256).
@@ -637,7 +631,22 @@ bp11(Cnt, Str) ->
    binary:split(Str, persistent_term:get(aaaaa)),
    bp11(Cnt - 1, Str).
 
+sp(Bool) ->
+   spawn_link(fun() -> erlang:process_flag(trap_exit, Bool), loop() end).
 
+sp2(Bool) ->
+   P = spawn_link(fun() -> erlang:process_flag(trap_exit, Bool), loop() end),
+   link(P),
+   P.
 
+a(P) ->
+   erlang:is_process_alive(P).
+
+loop() ->
+   receive
+      Msg ->
+         io:format("receive ~p ~p~n", [self(), Msg]),
+         loop()
+   end.
 
 

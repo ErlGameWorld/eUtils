@@ -132,7 +132,7 @@ end
    demonitor(MonitorRef, OptionList)
    监视器与link不同的是它是单向式观察一些进程终止，各个监视器通过Erlang的引用相互区分，是调用monitor返回的，具有唯一性，
    而且A进程可以设置多个对B进程的监视器，每一个通过不同的引用区分。
-   当被监视的进程终止时，一条格式{'Down',Reference, process, Pid, Reason}的消息会被发给监视此进程的进程
+   当被监视的进程终止时，一条格式{'DOWN',Reference, process, Pid, Reason}的消息会被发给监视此进程的进程
    调用erlang:demonitor(Reference)可以移除监视器，
    调用erlang:demonitor(Reference,[flush])可以让该监视进程邮箱中所有与Reference对应的{'DOWN', Reference,process,Pid,Reason}
    的消息被冲刷掉。

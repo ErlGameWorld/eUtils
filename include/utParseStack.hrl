@@ -6,6 +6,8 @@
 -define(GET_STACK(_), erlang:get_stacktrace()).
 -endif.
 
+-define(GSS(Stacktrace), try throw(0) catch _:_:Stacktrace -> Stacktrace end).
+
 %% 追溯打印函数调用流程
 -define(PRINT_STACK(Tag),
    Stack =

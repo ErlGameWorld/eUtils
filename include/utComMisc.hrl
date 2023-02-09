@@ -1,5 +1,9 @@
 %% 三目元算符
 -define(IIF(Cond, Then, That), case Cond of true -> Then; _ -> That end).
+-define(IIF(Expr, Expect, Then, ExprRet, That), case Expr of Expect -> Then; ExprRet -> That end).
+
+%% IF-DO表达式
+-define(IF(IFTure, DoThat), (IFTure) andalso (DoThat)).
 
 %%汉字unicode编码范围 0x4e00 - 0x9fa5
 -define(UNICODE_CHINESE_BEGIN, (4 * 16 * 16 * 16 + 14 * 16 * 16)).

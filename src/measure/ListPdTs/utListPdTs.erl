@@ -91,7 +91,7 @@ cvrTUnit(not_support) ->
 cvrTUnit(skip) ->
    skip;
 cvrTUnit(Time) ->
-   utTc:cvrTimeUnit(Time, native, nanosecond).
+   erlang:convert_time_unit(Time, native, nanosecond).
 
 timeToStr(not_support) ->
    <<"noSupport">>;

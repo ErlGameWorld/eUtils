@@ -1,5 +1,7 @@
 -module(nifHashbback).
 
+-compile([nowarn_unused_function, nowarn_unused_vars, nowarn_export_all]).
+
 -on_load(init/0).
 
 -export([
