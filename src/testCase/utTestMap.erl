@@ -47,3 +47,12 @@ tt3(N, Map) ->
          not_found
    end,
    tt3(N - 1, Map).
+
+ll(A, B) ->
+   A -- B.
+
+mm(A, B) ->
+   utMapsFold:diff(A, B).
+
+
+

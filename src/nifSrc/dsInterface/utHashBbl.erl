@@ -10,7 +10,7 @@ new() ->
 
 put(Key, Value, HashBbl1) ->
    BblNum1 = erlang:phash2(Key, ?Solt_1) + 1,
-   BblNum2 = erlang:phash(Key, ?Solt_2),
+   BblNum2 = erlang:phash2(Key, ?Solt_2),
    HashBbl2 = erlang:element(BblNum1, HashBbl1),
    ValueList = erlang:element(BblNum2, HashBbl2),
    case ValueList of
@@ -35,7 +35,7 @@ put(Key, Value, HashBbl1) ->
 
 get(Key, HashBbl1) ->
    BblNum1 = erlang:phash2(Key, ?Solt_1) + 1,
-   BblNum2 = erlang:phash(Key, ?Solt_2),
+   BblNum2 = erlang:phash2(Key, ?Solt_2),
    HashBbl2 = erlang:element(BblNum1, HashBbl1),
    ValueList = erlang:element(BblNum2, HashBbl2),
    case ValueList of

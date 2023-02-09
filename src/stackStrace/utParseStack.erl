@@ -17,17 +17,17 @@
 
 %% term序列化, term转为string
 parseStack(Class, Reason, Stacktrace) ->
-   eFmt:formatBin(<<"~n  Class:~s~n  Reason:~p~n  Stacktrace:~s">>, [Class, Reason, parseStack(Stacktrace)]).
+   eFmt:format(<<"~n  Class:~s~n  Reason:~p~n  Stacktrace:~n~s">>, [Class, Reason, parseStack(Stacktrace)]).
 
 parseStack(Stacktrace) ->
    <<begin
        case Location of
           [] ->
-             <<"     ", (atom_to_binary(Mod, utf8))/binary, ":", (atom_to_binary(Func, utf8))/binary, "(", (eFmt:formatBin("~w", [Arity]))/binary, ")\n">>;
+             <<"     ", (atom_to_binary(Mod, utf8))/binary, ":", (atom_to_binary(Func, utf8))/binary, "(", (eFmt:format("~w", [Arity]))/binary, ")\n">>;
           [{file, File}, {line, Line}] ->
              <<"     ", (atom_to_binary(Mod, utf8))/binary, ":", (atom_to_binary(Func, utf8))/binary, "/", (integer_to_binary(Arity))/binary, "(", (unicode:characters_to_binary(File))/binary, ":", (integer_to_binary(Line))/binary, ")\n">>;
           _ ->
-             <<"     ", (atom_to_binary(Mod, utf8))/binary, ":", (atom_to_binary(Func, utf8))/binary, "(", (eFmt:formatBin("~w", [Arity]))/binary, ")", (eFmt:formatBin("~w", [Location]))/binary, "\n">>
+             <<"     ", (atom_to_binary(Mod, utf8))/binary, ":", (atom_to_binary(Func, utf8))/binary, "(", (eFmt:format("~w", [Arity]))/binary, ")", (eFmt:format("~w", [Location]))/binary, "\n">>
        end
     end || {Mod, Func, Arity, Location} <- Stacktrace
    >>.

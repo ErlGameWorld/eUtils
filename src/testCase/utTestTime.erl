@@ -27,7 +27,10 @@ tt2(N, Sec, Fun) ->
 %% 经过测试 ls1 和 sl1 效率最高
 %%%%%%%%%%%%%%%%% datetime 和 timestamp 互相转换 测试对比函数 start %%%%%%%%%%%%%%%%%%%
 ls1(LocalDate) ->
-   erlang:universaltime_to_posixtime(erlang:localtime_to_universaltime(LocalDate)).
+   erlang:universaltime_to_posixtime(LocalDate).
+
+ls12(LocalDate) ->
+   erlang:localtime_to_universaltime(LocalDate).
 
 
 %% 此方法很准

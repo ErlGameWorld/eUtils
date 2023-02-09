@@ -64,9 +64,9 @@ handle_cast(doit, State) ->
       error_logger:info_msg("reloader done ... ~n", []),
       {noreply, State#state{last = Now}}
    catch
-      _:R ->
+      _:R:S ->
          error_logger:error_msg(
-            "reload failed R:~w Stack:~p~n", [R, erlang:get_stacktrace()]),
+            "reload failed R:~w Stack:~p~n", [R, S]),
          %% reloader failed, no state update
          {noreply, State}
    end;

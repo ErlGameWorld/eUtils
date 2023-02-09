@@ -63,7 +63,7 @@ compile_base_data(Table, ModName, IDPoses) ->
    FinalString = HeadString ++ ContentString ++ ErrorString,
    %% ?PRINT("string=~s~n",[FinalString]),
    try
-      {Mod, Code} = dynamic_compile:from_string(FinalString),
+      {Mod, Code} = utCompileStr:comStr(FinalString),
       code:load_binary(Mod, ModNameString ++ ".erl", Code)
    catch
       Type:Error -> io:format("Error compiling (~p): ~p~n", [Type, Error])

@@ -1,5 +1,6 @@
 -module(ut_gen_apu).
--behaviour(ut_gen_apu).
+
+% -behaviour(gen_apu).
 
 -compile(inline).
 -compile({inline_size, 128}).
@@ -31,12 +32,10 @@ start_link() ->
 init(_Args) ->
    {ok, #state{}}.
 
-xxxCall({xxxCall, Arg1, Arg2}, _State, _From) ->
-   {Arg1, Arg2},
+xxxCall({xxxCall, _Arg1, _Arg2}, _State, _From) ->
    {reply, ok}.
 
-xxxCast({xxxCast, Arg1, Arg2}, _State) ->
-   {Arg1, Arg2},
+xxxCast({xxxCast, _Arg1, _Arg2}, _State) ->
    kpS.
 
 handleInfo(_Msg, _State) ->

@@ -1,6 +1,6 @@
 -module(utTestChange).
 
--compile([export_all]).
+-compile([export_all, nowarn_unused_function, nowarn_unused_vars, nowarn_export_all]).
 
 -record(test, {a, b, c, d}).
 
