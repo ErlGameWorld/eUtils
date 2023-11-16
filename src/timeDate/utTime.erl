@@ -96,7 +96,7 @@
    , diffLDateTimeDayTime/2         %% 计算两个本地datetime() 时间差 返回单位 daytime()
    , diffUDateTimeDayTime/2         %% 计算两个世界datetime() 时间差 返回单位 daytime()
    , diffSecs/2                     %% 计算两个秒单位的 时间戳的时间差 返回单位 daytime()
-   , timeToSecs/1                   %% 转换 time() 为 Sec
+   , timeToSec/1                   %% 转换 time() 为 秒数
    , daysInYear/1                   %% 计算 Date为该年的哪一天
    , dateToStr/1                    %%  Data to Str
    , dateToStr/3                    %%  Data to Str
@@ -591,7 +591,7 @@ monthUBeginEnd(Sec) ->
    {Begin, Begin + monthSecs(Year, Month)}.
 
 %% 星期名字缩写
--spec sWeekName(week()) -> string().
+-spec sWeekName(week()) -> binary().
 sWeekName(1) -> <<"Mon">>;
 sWeekName(2) -> <<"Tue">>;
 sWeekName(3) -> <<"Wed">>;
@@ -601,7 +601,7 @@ sWeekName(6) -> <<"Sat">>;
 sWeekName(7) -> <<"Sun">>.
 
 %% 星期名字全称
--spec lWeekName(week()) -> string().
+-spec lWeekName(week()) -> binary().
 lWeekName(1) -> <<"Monday">>;
 lWeekName(2) -> <<"Tuesday">>;
 lWeekName(3) -> <<"Wednesday">>;
@@ -611,7 +611,7 @@ lWeekName(6) -> <<"Saturday">>;
 lWeekName(7) -> <<"Sunday">>.
 
 %% 月份名称缩写
--spec sMonthName(month()) -> string().
+-spec sMonthName(month()) -> binary().
 sMonthName(1) -> <<"Jan">>;
 sMonthName(2) -> <<"Feb">>;
 sMonthName(3) -> <<"Mar">>;
@@ -626,7 +626,7 @@ sMonthName(11) -> <<"Nov">>;
 sMonthName(12) -> <<"Dec">>.
 
 %% 月份名称全称
--spec lMonthName(month()) -> string().
+-spec lMonthName(month()) -> binary().
 lMonthName(1) -> <<"January">>;
 lMonthName(2) -> <<"February">>;
 lMonthName(3) -> <<"March">>;
@@ -705,8 +705,8 @@ diffSecs(Sec1, Sec2) ->
    secToDayTime(erlang:abs(Sec1 - Sec2)).
 
 %% 转换 time() 为 Sec
--spec timeToSecs(time()) -> timestamp().
-timeToSecs({H, M, S}) ->
+-spec timeToSec(time()) -> timestamp().
+timeToSec({H, M, S}) ->
    H * ?SECS_HOUR + M * ?SECS_MIN + S.
 
 %% 计算 Date为该年的哪一天
@@ -715,55 +715,64 @@ daysInYear({Y, _, _} = Date) ->
    date_to_gregorian_days(Date) - date_to_gregorian_days({Y, 1, 1}).
 
 %%  Data to Str
--spec dateToStr(date()) -> string().
+-spec dateToStr(date()) -> binary().
 dateToStr({Year, Month, Day}) ->
-   S = io_lib:format("~B_~2.10.0B_~2.10.0B", [Year, Month, Day]),
-   lists:flatten(S).
+   <<(integer_to_binary(Year))/binary, "-", (i2b(Month))/binary, "-", (i2b(Day))/binary>>.
 
 %%  Data to Str
--spec dateToStr(year(), month(), day()) -> string().
+-spec dateToStr(year(), month(), day()) -> binary().
 dateToStr(Year, Month, Day) ->
-   S = io_lib:format("~B_~2.10.0B_~2.10.0B", [Year, Month, Day]),
-   lists:flatten(S).
+   <<(integer_to_binary(Year))/binary, "-", (i2b(Month))/binary, "-", (i2b(Day))/binary>>.
 
 %%  Data to Str
--spec dateToStr(date(), string()) -> string().
+-spec dateToStr(date(), binary()) -> binary().
 dateToStr({Year, Month, Day}, Separator) ->
-   S = io_lib:format("~B~w~2.10.0B~w~2.10.0B", [Year, Separator, Month, Separator, Day]),
-   lists:flatten(S).
+   <<(integer_to_binary(Year))/binary, Separator/binary, (i2b(Month))/binary, Separator/binary, (i2b(Day))/binary>>.
 
 %%  Data to Str
--spec dateToStr(year(), month(), day(), string()) -> string().
+-spec dateToStr(year(), month(), day(), binary()) -> binary().
 dateToStr(Year, Month, Day, Separator) ->
-   S = io_lib:format("~B~w~2.10.0B~w~2.10.0B", [Year, Separator, Month, Separator, Day]),
-   lists:flatten(S).
+   <<(integer_to_binary(Year))/binary, Separator/binary, (i2b(Month))/binary, Separator/binary, (i2b(Day))/binary>>.
 
 %%  time to Str
--spec timeToStr(time()) -> string().
+-spec timeToStr(time()) -> binary().
 timeToStr({Hour, Minute, Second}) ->
-   S = io_lib:format("~B:~2.10.0B:~2.10.0B", [Hour, Minute, Second]),
-   lists:flatten(S).
+   <<(i2b(Hour))/binary, ":", (i2b(Minute))/binary, ":", (i2b(Second))/binary>>.
 
 %%  time to Str
--spec timeToStr(hour(), minute(), second()) -> string().
+-spec timeToStr(hour(), minute(), second()) -> binary().
 timeToStr(Hour, Minute, Second) ->
-   S = io_lib:format("~B:~2.10.0B:~2.10.0B", [Hour, Minute, Second]),
-   lists:flatten(S).
+   <<(i2b(Hour))/binary, ":", (i2b(Minute))/binary, ":", (i2b(Second))/binary>>.
 
 %%  time to Str
--spec timeToStr(time(), string()) -> string().
+-spec timeToStr(time(), binary()) -> binary().
 timeToStr({Hour, Minute, Second}, Separator) ->
-   S = io_lib:format("~B~w~2.10.0B~w~2.10.0B", [Hour, Separator, Minute, Separator, Second]),
-   lists:flatten(S).
+   <<(i2b(Hour))/binary, Separator/binary, (i2b(Minute))/binary, Separator/binary, (i2b(Second))/binary>>.
 
 %%  time to Str
--spec timeToStr(hour(), minute(), second(), string()) -> string().
+-spec timeToStr(hour(), minute(), second(), binary()) -> binary().
 timeToStr(Hour, Minute, Second, Separator) ->
-   S = io_lib:format("~B~w~2.10.0B~w~2.10.0B", [Hour, Separator, Minute, Separator, Second]),
-   lists:flatten(S).
+   <<(i2b(Hour))/binary, Separator/binary, (i2b(Minute))/binary, Separator/binary, (i2b(Second))/binary>>.
 
 %%  datetime to Str
--spec dateTimeStr(datetime()) -> string().
+-spec dateTimeStr(datetime()) -> binary().
 dateTimeStr({{Year, Month, Day}, {Hour, Minute, Second}}) ->
-   S = io_lib:format("~B_~2.10.0B_~2.10.0B ~B:~2.10.0B:~2.10.0B", [Year, Month, Day, Hour, Minute, Second]),
-   lists:flatten(S).
+   <<(integer_to_binary(Year))/binary, "-", (i2b(Month))/binary, "-", (i2b(Day))/binary, " ", (i2b(Hour))/binary, ":", (i2b(Minute))/binary, ":", (i2b(Second))/binary>>.
+
+i2b(Num) ->
+   if
+      Num < 10 ->
+         <<"0", (integer_to_binary(Num))/binary>>;
+      true ->
+         integer_to_binary(Num)
+   end.
+
+i3b(Num) ->
+   if
+      Num < 10 ->
+         <<"00", (integer_to_binary(Num))/binary>>;
+      Num < 100 ->
+         <<"0", (integer_to_binary(Num))/binary>>;
+      true ->
+         integer_to_binary(Num)
+   end.

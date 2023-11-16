@@ -63,6 +63,17 @@ byteSizeTermGlobal(Term) when is_binary(Term) ->
          % heap binary
          0
    end;
+byteSizeTermGlobal(Term) when is_bitstring(Term) ->
+   % global data storage within allocators
+   BinarySize = erlang:byte_size(Term),
+   if
+      BinarySize > ?HEAP_BINARY_LIMIT ->
+         % refc binary
+         BinarySize;
+      true ->
+         % heap binary
+         0
+   end;
 byteSizeTermGlobal(_) ->
    0.
 

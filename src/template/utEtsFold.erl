@@ -1,8 +1,10 @@
 -module(utEtsFold).
-
+-include_lib("stdlib/include/ms_transform.hrl").
 %% 请注意，对于表类型ordered_set和由单个 ETS 函数调用(如select/2)完成的遍历(一次调用就返回了全部结果没有Next 迭代器了)，不需要 safe_fixtable/ 2 。
 
--export([rank/5, fold/2]).
+-compile([export_all, nowarn_export_all]).
+
+-export([rank/5, fold/2, fold/3]).
 
 rank(TabId, PageInfo, Page, Limit, TotalCnt) ->
    %% 遍历所有tab
@@ -62,7 +64,6 @@ makeRankData([{CurKey, Uuid} | AllyIds], LastKey, Acc) ->
          makeRankData(AllyIds, LastKey, Acc)
    end.
 
-
 fold(TabId, Limit) ->
    ets:safe_fixtable(TabId, true),
    try
@@ -89,3 +90,55 @@ continueNext(NextKey) ->
 matchDoFun(_ValueList) ->
    %% do something
    ok.
+
+fold(TabId, Limit, Fun) ->
+   ets:safe_fixtable(TabId, true),
+   try
+      case ets:match_object(TabId, '$1', Limit) of
+         '$end_of_table' ->
+            ok;
+         {ValueList, NextKey} ->
+            Fun(ValueList),
+            continueNext(NextKey, Fun)
+      end
+   after
+      ets:safe_fixtable(TabId, false)
+   end.
+
+continueNext(NextKey, Fun) ->
+   case ets:match_object(NextKey) of
+      '$end_of_table' ->
+         ok;
+      {ValueList, NewNextKey} ->
+         Fun(ValueList),
+         continueNext(NewNextKey, Fun)
+   end.
+
+new() ->
+   ets:new(test_replace, [named_table, public]),
+   [ets:insert(test_replace, {One, #{ One => One}}) || One <- lists:seq(1, 100000)],
+   ok.
+
+new_bag(Count) ->
+   ets:new(test_bag, [named_table, public, bag]),
+   [ets:insert(test_bag, {1, One}) || One <- lists:seq(1, Count)],
+   ok.
+
+replace(Key) ->
+   [{Key, Map}] = ets:lookup(test_replace, Key),
+   _NewMap = Map#{aaa => aaa},
+   Ms = ets:fun2ms(fun({Key1, _OldMap}) when Key =/= Key1 -> {Key1, 1} end),
+   ets:select_replace(test_replace, Ms).
+replace2(Key) ->
+   [{Key, Map} = Old] = ets:lookup(test_replace, Key),
+   NewMap = Map#{bbbb => bbb},
+   ets:select_replace(test_replace, [{Old, [], [{const, {Key, NewMap}}]}]).
+
+replace3(Key) ->
+   [{Key, Map} = Old] = ets:lookup(test_replace, Key),
+   NewMap = Map#{bbbb => bbb},
+   ets:select_replace(test_replace, [{Old, [], [{const, {Key, NewMap}}]}]).
+
+
+
+

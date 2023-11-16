@@ -66,7 +66,7 @@ ok(N) ->
    ok(N - 1).
 
 test(A) ->
-   ?IIF(lists:keyfind(a, 1, A), false, none, {_, V}, V).
+   ?CASE(lists:keyfind(a, 1, A), false, none, {_, V}, V).
 
 ams1(A) ->  ok.
 ams2(A) -> fun() -> A end.

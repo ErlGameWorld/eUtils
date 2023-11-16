@@ -68,7 +68,7 @@ distribution([], _Aver, Greater, Less) ->
 ts(LoopTime, M, F, A) ->
    {Max, Min, Sum, Aver, Greater, Less} = loopTs(LoopTime, M, F, A, LoopTime, 0, 0, 0, []),
    io:format("=====================~n"),
-   <<_:16, ArgsStr/binary>> = << <<", ", (iolist_to_binary(io_lib:format("~p", [OArg], [{chars_limit, 80}])))/binary>>  || OArg <- A>>,
+   case A  of [] -> ArgsStr = <<>>; _ -> <<_:16, ArgsStr/binary>> = << <<", ", (iolist_to_binary(io_lib:format("~p", [OArg], [{chars_limit, 80}])))/binary>>  || OArg <- A>> end,
    io:format("execute ~p:~p(~s).~n", [M, F, ArgsStr]),
    io:format("execute LoopTime:~p~n", [LoopTime]),
    io:format("MaxTime: ~10s(ns) ~10s(s)~n", [integer_to_binary(Max), float_to_binary(Max / 1000000000, [{decimals, 6}, compact])]),
@@ -111,7 +111,7 @@ tm(ProcCnt, LoopTime, M, F, A) ->
    loopSpawn(ProcCnt, M, F, A, self(), LoopTime),
    {Max, Min, Sum, Aver, Greater, Less} = collector(ProcCnt, 0, 0, 0, ProcCnt, []),
    io:format("=====================~n"),
-   <<_:16, ArgsStr/binary>> = << <<", ", (iolist_to_binary(io_lib:format("~p", [OArg], [{chars_limit, 80}])))/binary>>  || OArg <- A>>,
+   case A  of [] -> ArgsStr = <<>>; _ -> <<_:16, ArgsStr/binary>> = << <<", ", (iolist_to_binary(io_lib:format("~p", [OArg], [{chars_limit, 80}])))/binary>>  || OArg <- A>> end,
    io:format("execute ~p:~p(~s).~n", [M, F, ArgsStr]),
    io:format("execute LoopTime:~p~n", [LoopTime]),
    io:format("execute ProcCnts:~p~n", [ProcCnt]),

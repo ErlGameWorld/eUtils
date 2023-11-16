@@ -1,6 +1,6 @@
 %% 三目元算符
--define(IIF(Cond, Then, That), case Cond of true -> Then; _ -> That end).
--define(IIF(Expr, Expect, Then, ExprRet, That), case Expr of Expect -> Then; ExprRet -> That end).
+-define(CASE(Cond, Then, That), case Cond of true -> Then; _ -> That end).
+-define(CASE(Expr, Expect, Then, ExprRet, That), case Expr of Expect -> Then; ExprRet -> That end).
 
 %% IF-DO表达式
 -define(IF(IFTure, DoThat), (IFTure) andalso (DoThat)).

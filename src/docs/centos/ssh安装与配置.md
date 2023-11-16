@@ -1,6 +1,6 @@
 # 安装
     yum install openssl
-    yum install openssl_server
+    yum install openssh-server
 
 # ssh 生成密钥
     ssh-keygen -q -t rsa -b 2048 -f /etc/ssh/ssh_host_rsa_key -N '' ; 

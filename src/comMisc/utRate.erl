@@ -1,5 +1,7 @@
 -module(utRate).
 
+-import(rand, [uniform/0, uniform/1]).
+
 -export([happen/1,
    choose/1,
    choose_n_uniq/2,
@@ -9,21 +11,23 @@
    collect_n/2, %% return N items, same item may appear than once
    collect_one/1,
    rand_list/1,
-   rand_list_n/2]).
+   rand_list_n/2
+   , random/2
+]).
 
--on_load(init/0).
+random(Min, Min) ->
+   Min;
+random(Min, Max) ->
+   M = Min - 1,
+   uniform(Max - M) + M.
 
-init() ->
-   % mtwist:seed(time_utils:now()),
-   rand:seed(exs1024, erlang:timestamp()),
-   ok.
 
 happen(Rate) when Rate == 1.0 -> true;
 happen(Rate) when Rate < 1 ->
    happen(Rate * 10000);
 happen(Rate) ->
    % RandomValue = mtwist:uniform(10000),
-   RandomValue = rand:uniform(10000),
+   RandomValue = uniform(10000),
    compare(RandomValue, Rate).
 
 %% Rates = [{RateA, ValueA}, {RateB, ValueB}, {default, DefaultValue}],
@@ -36,7 +40,7 @@ do_choose(Rates) ->
    MaxValue = lists:foldl(fun({Rate, _}, Result) ->
       Result + Rate
                           end, 0, Rates),
-   RandomValue = rand:uniform(MaxValue),
+   RandomValue = uniform(MaxValue),
    {Rate, Value} = choose(Rates, RandomValue, 0),
    {Rate, Value}.
 
@@ -59,7 +63,7 @@ choose_n_uniq(Rates, N, Result) ->
 %% select the happened Rate 
 range(Range) ->
    % select(mtwist:uniform(10000), Range).
-   select(rand:uniform(10000), Range).
+   select(uniform(10000), Range).
 
 select(RandomValue, [{Rate, Value} | _Range]) when RandomValue =< Rate -> Value;
 select(_RandomValue, [{default, Value}]) -> Value;
@@ -82,7 +86,7 @@ collect(Rates, N) ->
 collect(0, _Rates, _MaxValue, Result) -> Result;
 collect(N, Rates, MaxValue, Result) ->
    % RandValue = mtwist:uniform(MaxValue),
-   RandValue = rand:uniform(MaxValue),
+   RandValue = uniform(MaxValue),
    {Rate, Value} = choose(Rates, RandValue, 0),
    NewRates = lists:delete({Rate, Value}, Rates),
    collect(N - 1, NewRates, MaxValue - Rate, [Value | Result]).
@@ -95,7 +99,7 @@ select_n(_List, 0, Result) -> Result;
 select_n(List, N, Result) ->
    Len = length(List),
    % Index = mtwist:uniform(Len) + 1,
-   Index = rand:uniform(Len),
+   Index = uniform(Len),
    Elem = lists:nth(Index, List),
    select_n(lists:delete(Elem, List), N - 1, [Elem | Result]).
 
@@ -105,7 +109,7 @@ collect_n(_List, 0, Result) -> Result;
 collect_n(List, N, Result) ->
    Len = length(List),
    % Index = trunc(mtwist:uniform(Len)) + 1,
-   Index = rand:uniform(Len),
+   Index = uniform(Len),
    Elem = lists:nth(Index, List),
    collect_n(List, N - 1, [Elem | Result]).
 
@@ -114,10 +118,10 @@ collect_one(List) ->
    Elem.
 
 rand_list(List) ->
-   [X || {_, X} <- lists:sort([{rand:uniform(), N} || N <- List])].
+   [X || {_, X} <- lists:sort([{uniform(), N} || N <- List])].
 
 rand_list_n(List, Limit) ->
-   SortedList = lists:sort([{rand:uniform(), N} || N <- List]),
+   SortedList = lists:sort([{uniform(), N} || N <- List]),
    {Result, _} = misc_utils:each(
       fun({_Fator, Elem}, {Acc, Idx}) ->
          if

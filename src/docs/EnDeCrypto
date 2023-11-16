@@ -1,0 +1,41 @@
+#!/usr/bin/env escript
+%% -*- erlang -*-
+main([EnOrDe, Key, InFileName, OutEnFile]) ->
+   crypto:start(),
+   io:format("~p~n", [{EnOrDe, Key, InFileName, OutEnFile}]),
+   case file:read_file(InFileName) of
+      {ok, SrcData} ->
+         IV = <<88:128>>,
+         KeyBin = fixKey(Key),
+         {IsEn, DealData} = case EnOrDe of "en" -> {true, SrcData}; _ -> {false, base64:decode(SrcData)} end,
+         EnData = crypto:crypto_one_time(aes_128_cbc, KeyBin, IV, DealData, IsEn),
+         LastData = case EnOrDe of "en" -> base64:encode(EnData); _ -> EnData end,
+         case OutEnFile of
+            "" ->
+               io:format("~s the file result:~ts ~n", [EnOrDe, LastData]);
+            _ ->
+               file:write_file(OutEnFile, LastData)
+         end,
+         halt(0);
+      _ ->
+         io:format("bad file:~ts ~n", [InFileName]),
+         halt(1)
+   end.
+
+fixKey(Key) ->
+   KeyBin = list_to_binary(Key),
+   KeySize = bit_size(KeyBin),
+   case KeySize >= 128 of
+      true ->
+         io:format("too len key max len is 128, in put len:~p ~n", [KeySize]),
+         halt(1);
+      _ ->
+         FixLen = 128 - KeySize,
+         <<0:FixLen, KeyBin/binary>>
+   end.
+
+
+
+
+
+

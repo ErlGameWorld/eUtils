@@ -90,7 +90,7 @@ start_search(#bstar_map{open_list = [CurrentCell | Rest], target = Target} = BSt
          %% 非自由节点，沿着障碍爬
          Dir = get_branchDir(CurrentCell#cell.branch, CurrentCell#cell.dir),
          Dir2 = Dir + ?MAX_DIRECTION - 1,
-         Dir3 = ?IIF(Dir2 >= ?MAX_DIRECTION, Dir2 - ?MAX_DIRECTION, Dir2),
+         Dir3 = ?CASE(Dir2 >= ?MAX_DIRECTION, Dir2 - ?MAX_DIRECTION, Dir2),
          case get_branch(CurrentCell, CurrentCell#cell.branch, Dir3, BStarMap) of
             {true, OpenCell, BStarMap2} ->
                BStarMap3 = close_cell(BStarMap2, CurrentCell),
@@ -152,9 +152,9 @@ get_left_right(CurrentCell, NextCell, BranchDir, Dir, #bstar_map{origin = Origin
                Angle = g_GetDirAngle(Origin#cell.x, Origin#cell.y, Cell2#cell.x, Cell2#cell.y, NextCell#cell.x, NextCell#cell.y),
                Angle2 = case BranchDir of
                            ?branch_dir_left ->
-                              ?IIF(Angle > 32, 64 - Angle, 0 - Angle);
+                              ?CASE(Angle > 32, 64 - Angle, 0 - Angle);
                            _ ->
-                              ?IIF(Angle > 32, Angle - 64, Angle)
+                              ?CASE(Angle > 32, Angle - 64, Angle)
                         end,
                Cell4 = Cell3#cell{reel = Count + 1, s = ?cell_state_open, angle = Angle2},
                BStarMap2 = save_cell(BStarMap, Cell4),
@@ -203,7 +203,7 @@ get_branch(CurrentCell, BranchDir, Dir, BStarMap) ->
 get_branch([], _CurrentCell, _BranchDir, _Dir, BStarMap) ->
    {false, BStarMap};
 get_branch([Count | Rest], CurrentCell, BranchDir, Dir, #bstar_map{target = Target, map_config = #map_config{weight = Weight, height = Height}} = BStarMap) ->
-   Dir2 = ?IIF(Dir >= ?MAX_DIRECTION, Dir - ?MAX_DIRECTION, Dir),
+   Dir2 = ?CASE(Dir >= ?MAX_DIRECTION, Dir - ?MAX_DIRECTION, Dir),
    NextDir = branchAround(BranchDir, Dir2),
    Around = around(NextDir),
    NextX = CurrentCell#cell.x + Around#pos.x,
@@ -277,16 +277,16 @@ get_branch2(_CurrentCell, _NextCell, _BranchDir, _NextDir, _Count, BStarMap) ->
 %% 计算下一个格子属于自由节点还是攀爬节点
 get_branch_i(CurrentCell, NextCell, BranchDir, NextDir, Count, #bstar_map{origin = Origin} = _BStarMap) ->
    Reel = CurrentCell#cell.reel + Count - 1,
-   Reel2 = ?IIF(Reel < 0, 0, Reel),
+   Reel2 = ?CASE(Reel < 0, 0, Reel),
    Angle = g_GetDirAngle(Origin#cell.x, Origin#cell.y, NextCell#cell.x, NextCell#cell.y, CurrentCell#cell.x, CurrentCell#cell.y),
    Angle2 = case BranchDir of
-               ?branch_dir_left -> ?IIF(Angle > 32, 64 - Angle, 0 - Angle);
-               _ -> ?IIF(Angle > 32, Angle - 64, Angle)
+               ?branch_dir_left -> ?CASE(Angle > 32, 64 - Angle, 0 - Angle);
+               _ -> ?CASE(Angle > 32, Angle - 64, Angle)
             end,
    Angle3 = CurrentCell#cell.angle + Angle2,
-   {Angle4, Reel3} = ?IIF(Angle3 >= 64, {Angle3 - 64, Reel2 - 4}, {Angle3, Reel2}),
+   {Angle4, Reel3} = ?CASE(Angle3 >= 64, {Angle3 - 64, Reel2 - 4}, {Angle3, Reel2}),
    NextCell2 = NextCell#cell{reel = Reel3, s = ?cell_state_open, angle = Angle4},
-   ?IIF(NextCell2#cell.reel > 0, NextCell2#cell{branch = BranchDir, dir = NextDir}, NextCell2#cell{branch = ?branch_dir_none, dir = -1, angle = 0}).
+   ?CASE(NextCell2#cell.reel > 0, NextCell2#cell{branch = BranchDir, dir = NextDir}, NextCell2#cell{branch = ?branch_dir_none, dir = -1, angle = 0}).
 
 %% 找下一个自由点
 find_next(CurrentCell, BStarMap) ->
@@ -318,7 +318,7 @@ get_cell(#bstar_map{cell_dict = Dict, map_config = MapConfig}, X, Y) ->
    case dict:find({X, Y}, Dict) of
       {ok, O} -> O;
       _ ->
-         CellState = ?IIF(lib_map:is_walkable_by_index(MapConfig, X, Y), ?cell_state_none, ?cell_state_balk),
+         CellState = ?CASE(lib_map:is_walkable_by_index(MapConfig, X, Y), ?cell_state_none, ?cell_state_balk),
          #cell{x = X, y = Y, s = CellState}
    end.
 
@@ -343,8 +343,8 @@ g_GetDirDiff(OriginX, OriginY, TargetX, TargetY, X, Y) ->
    TargetDir = g_GetDirIndex(OriginX, OriginY, TargetX, TargetY),
    TestDir = g_GetDirIndex(OriginX, OriginY, X, Y),
    DirDiff = TargetDir - TestDir,
-   DirDiff2 = ?IIF(DirDiff < 0, DirDiff + 64, DirDiff),
-   ?IIF(DirDiff2 > 32, 64 - DirDiff2, DirDiff2).
+   DirDiff2 = ?CASE(DirDiff < 0, DirDiff + 64, DirDiff),
+   ?CASE(DirDiff2 > 32, 64 - DirDiff2, DirDiff2).
 
 %% 取得方向
 g_GetDirAngle(OriginX, OriginY, TargetX, TargetY, X, Y) ->
@@ -430,7 +430,7 @@ get_branchAround(CurrentCell, Branch, TestDir, BStarMap) ->
 get_branchAround([], _CurrentCell, _Branch, _TestDir, _BStarMap) ->
    false;
 get_branchAround([Count | Rest], CurrentCell, Branch, TestDir, #bstar_map{map_config = #map_config{weight = Weight, height = Height}} = BStarMap) ->
-   TestDir2 = ?IIF(TestDir =:= ?MAX_DIRECTION, 0, TestDir),
+   TestDir2 = ?CASE(TestDir =:= ?MAX_DIRECTION, 0, TestDir),
    BranchAround = branchAround(Branch, TestDir2),
    Around = around(BranchAround),
    NextX = CurrentCell#cell.x + Around#pos.x,

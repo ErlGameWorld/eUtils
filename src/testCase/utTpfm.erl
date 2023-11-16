@@ -649,4 +649,34 @@ loop() ->
          loop()
    end.
 
+% td1(List) ->
+%    [{One, One, One, One} ||  One <- List],
+%    ok.
+%
+% td2(List) ->
+%    [{One, One, One, One} ||  One <- List].
 
+forL(0, L) ->
+   ok;
+forL(Index, L) ->
+   lists:nth(Index, L),
+   forL(Index - 1, L).
+
+forL(0, _L, _) ->
+   ok;
+forL(Index, L, _) ->
+   V = lists:nth(Index, L),
+   forL(Index - 1, L, V).
+
+forB(0, _B, _) ->
+   ok;
+forB(Index, B, _) ->
+   BIndex = Index * 3,
+   <<_:BIndex/bits, V:3, _/bits>> = B,
+   forB(Index - 1, B, V).
+
+delL(L1, L2) ->
+   L1 -- L2.
+
+delM(M1, M2) ->
+   utMapsFold:diff(M1, M2).
