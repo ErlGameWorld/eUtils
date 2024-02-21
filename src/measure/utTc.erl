@@ -71,12 +71,12 @@ ts(LoopTime, M, F, A) ->
    case A  of [] -> ArgsStr = <<>>; _ -> <<_:16, ArgsStr/binary>> = << <<", ", (iolist_to_binary(io_lib:format("~p", [OArg], [{chars_limit, 80}])))/binary>>  || OArg <- A>> end,
    io:format("execute ~p:~p(~s).~n", [M, F, ArgsStr]),
    io:format("execute LoopTime:~p~n", [LoopTime]),
-   io:format("MaxTime: ~10s(ns) ~10s(s)~n", [integer_to_binary(Max), float_to_binary(Max / 1000000000, [{decimals, 6}, compact])]),
-   io:format("MinTime: ~10s(ns) ~10s(s)~n", [integer_to_binary(Min), float_to_binary(Min / 1000000000, [{decimals, 6}, compact])]),
-   io:format("SumTime: ~10s(ns) ~10s(s)~n", [integer_to_binary(Sum), float_to_binary(Sum / 1000000000, [{decimals, 6}, compact])]),
-   io:format("AvgTime: ~10s(ns) ~10s(s)~n", [float_to_binary(Aver, [{decimals, 6}, compact]), float_to_binary(Aver / 1000000000, [{decimals, 6}, compact])]),
-   io:format("Grar   : ~10s(cn) ~10s(~s)~n", [integer_to_binary(Greater), float_to_binary(Greater / LoopTime, [{decimals, 2}]), <<"%">>]),
-   io:format("Less   : ~10s(cn) ~10s(~s)~n", [integer_to_binary(Less), float_to_binary(Less / LoopTime, [{decimals, 2}]), <<"%">>]),
+   io:format("MaxTime: ~15s(ns) ~15s(s)~n", [integer_to_binary(Max), float_to_binary(Max / 1000000000, [{decimals, 2}, compact])]),
+   io:format("MinTime: ~15s(ns) ~15s(s)~n", [integer_to_binary(Min), float_to_binary(Min / 1000000000, [{decimals, 2}, compact])]),
+   io:format("SumTime: ~15s(ns) ~15s(s)~n", [integer_to_binary(Sum), float_to_binary(Sum / 1000000000, [{decimals, 2}, compact])]),
+   io:format("AvgTime: ~15s(ns) ~15s(s)~n", [float_to_binary(Aver, [{decimals, 2}, compact]), float_to_binary(Aver / 1000000000, [{decimals, 2}, compact])]),
+   io:format("Grar   : ~15s(cn) ~15s(~s)~n", [integer_to_binary(Greater), float_to_binary(Greater / LoopTime, [{decimals, 2}]), <<"%">>]),
+   io:format("Less   : ~15s(cn) ~15s(~s)~n", [integer_to_binary(Less), float_to_binary(Less / LoopTime, [{decimals, 2}]), <<"%">>]),
    io:format("=====================~n").
 
 
@@ -108,28 +108,29 @@ loopTs(Index, M, F, A, LoopTime, Max, Min, Sum, List) ->
 %% ===================================================================
 
 tm(ProcCnt, LoopTime, M, F, A) ->
-   loopSpawn(ProcCnt, M, F, A, self(), LoopTime),
+   loopSpawn(ProcCnt, M, F, A, self(), LoopTime, []),
    {Max, Min, Sum, Aver, Greater, Less} = collector(ProcCnt, 0, 0, 0, ProcCnt, []),
    io:format("=====================~n"),
    case A  of [] -> ArgsStr = <<>>; _ -> <<_:16, ArgsStr/binary>> = << <<", ", (iolist_to_binary(io_lib:format("~p", [OArg], [{chars_limit, 80}])))/binary>>  || OArg <- A>> end,
    io:format("execute ~p:~p(~s).~n", [M, F, ArgsStr]),
    io:format("execute LoopTime:~p~n", [LoopTime]),
    io:format("execute ProcCnts:~p~n", [ProcCnt]),
-   io:format("PMaxTime: ~10s(ns) ~10s(s)~n", [integer_to_binary(Max), float_to_binary(Max / 1000000000, [{decimals, 6}, compact])]),
-   io:format("PMinTime: ~10s(ns) ~10s(s)~n", [integer_to_binary(Min), float_to_binary(Min / 1000000000, [{decimals, 6}, compact])]),
-   io:format("PSumTime: ~10s(ns) ~10s(s)~n", [integer_to_binary(Sum), float_to_binary(Sum / 1000000000, [{decimals, 6}, compact])]),
-   io:format("PAvgTime: ~10s(ns) ~10s(s)~n", [float_to_binary(Aver, [{decimals, 6}, compact]), float_to_binary(Aver / 1000000000, [{decimals, 6}, compact])]),
-   io:format("FAvgTime: ~10s(ns) ~10s(s)~n", [float_to_binary(Aver / LoopTime, [{decimals, 6}, compact]), float_to_binary(Aver / LoopTime / 1000000000, [{decimals, 6}, compact])]),
-   io:format("PGrar   : ~10s(cn) ~10s(~s)~n", [integer_to_binary(Greater), float_to_binary(Greater / ProcCnt, [{decimals, 2}]), <<"%">>]),
-   io:format("PLess   : ~10s(cn) ~10s(~s)~n", [integer_to_binary(Less), float_to_binary(Less / ProcCnt, [{decimals, 2}]), <<"%">>]),
+   io:format("PMaxTime: ~15s(ns) ~15s(s)~n", [integer_to_binary(Max), float_to_binary(Max / 1000000000, [{decimals, 2}, compact])]),
+   io:format("PMinTime: ~15s(ns) ~15s(s)~n", [integer_to_binary(Min), float_to_binary(Min / 1000000000, [{decimals, 2}, compact])]),
+   io:format("PSumTime: ~15s(ns) ~15s(s)~n", [integer_to_binary(Sum), float_to_binary(Sum / 1000000000, [{decimals, 2}, compact])]),
+   io:format("PAvgTime: ~15s(ns) ~15s(s)~n", [float_to_binary(Aver, [{decimals, 2}, compact]), float_to_binary(Aver / 1000000000, [{decimals, 2}, compact])]),
+   io:format("FAvgTime: ~15s(ns) ~15s(s)~n", [float_to_binary(Aver / LoopTime, [{decimals, 2}, compact]), float_to_binary(Aver / LoopTime / 1000000000, [{decimals, 2}, compact])]),
+   io:format("PGrar   : ~15s(cn) ~15s(~s)~n", [integer_to_binary(Greater), float_to_binary(Greater / ProcCnt, [{decimals, 2}]), <<"%">>]),
+   io:format("PLess   : ~15s(cn) ~15s(~s)~n", [integer_to_binary(Less), float_to_binary(Less / ProcCnt, [{decimals, 2}]), <<"%">>]),
    io:format("=====================~n").
 
 
-loopSpawn(0, _, _, _, _, _) ->
+loopSpawn(0, _, _, _, _, _, AllPid) ->
+   [OnePid ! do_work || OnePid <- AllPid],
    ok;
-loopSpawn(ProcCnt, M, F, A, CollectorPid, LoopTime) ->
-   spawn_link(fun() -> worker(LoopTime, M, F, A, CollectorPid) end),
-   loopSpawn(ProcCnt - 1, M, F, A, CollectorPid, LoopTime).
+loopSpawn(ProcCnt, M, F, A, CollectorPid, LoopTime, AllPid) ->
+   Pid = spawn_link(fun() -> worker(LoopTime, M, F, A, CollectorPid) end),
+   loopSpawn(ProcCnt - 1, M, F, A, CollectorPid, LoopTime, [Pid | AllPid]).
 
 collector(0, Max, Min, Sum, ProcCnt, List) ->
    Aver = Sum / ProcCnt,
@@ -159,14 +160,17 @@ collector(Index, Max, Min, Sum, ProcCnt, List) ->
    end.
 
 worker(LoopTime, M, F, A, CollectorPid) ->
-   SumTime = loopTm(LoopTime, M, F, A, 0),
-   CollectorPid ! {result, SumTime}.
+   receive
+      do_work ->
+         SumTime = loopTm(LoopTime, M, F, A, 0),
+         CollectorPid ! {result, SumTime}
+   end.
 
 loopTm(0, _, _, _, SumTime) ->
    SumTime;
 loopTm(LoopTime, M, F, A, SumTime) ->
-   Microsecond = doTc(M, F, A),
-   loopTm(LoopTime - 1, M, F, A, SumTime + Microsecond).
+   Nanosecond = doTc(M, F, A),
+   loopTm(LoopTime - 1, M, F, A, SumTime + Nanosecond).
 
 test(N) ->
    M1 = erlang:monotonic_time(),
