@@ -113,17 +113,18 @@ end
    假如有A,B两个进程且彼此link
    总结...
    1.当A的结束原因是normal时(进程正常执行完就是normal)，B是不会退出的，此时link机制不发生作用
-   2.若A的结束原因是killed，例如调用exit（PidA，kill） ，则无论B是否有设置trap_exit，B都会terminate，此时退出信号捕捉机制是无效的
-   3.若A的结束原因不是normal也不是killed(例如exit(PidA,Reason))，那么B在设置了trap_exit时，会捕捉到退出信号，
-   取而代之的是收取到一条消息｛‘EXIT’，Pid，Reason｝，这时B不会结束，用户可以根据收到的消息对A进程的结束进行处理；若B没有设置trap_exit，B就会terminate
-   
+   2.若A的结束原因是kill，例如调用exit（PidA，kill） ，那么B在设置了trap_exit时，会捕捉到退出信号，取而代之的是收取到一条消息｛‘EXIT’，Pid，killed｝，有有时候接收到会是 ‘EXIT’，Pid，kill｝ 具体看情况了
+   这时B不会结束，用户可以根据收到的消息对A进程的结束进行处理；若B没有设置trap_exit，B就会被杀掉
+   3.若A的结束原因不是normal也不是kill(例如exit(PidA,Reason))，那么B在设置了trap_exit时，会捕捉到退出信号，取而代之的是收取到一条消息｛‘EXIT’，Pid，Reason｝，
+   这时B不会结束，用户可以根据收到的消息对A进程的结束进行处理；若B没有设置trap_exit，B就会被杀掉
+   对进程发起退出信号 根据A是否设置了trap_exit的状态表
    |捕获状态               |退出信号(原因)         |动作                                     |
    | :-------------------| ------------------: | :--------------------------------------:|  
-   |false                |    normal           |    不做任何事                             |
-   |false                |    kill             |    消亡,向链接的进程广播退出信号(killed)     |
-   |false                |    X                |    消亡,向链接的进程广播退出信号X            |
+   |false                |    normal           |    不做任何事                            |
+   |false                |    kill             |    消亡,向链接的进程广播退出信号(killed)    |
+   |false                |    X                |    消亡,向链接的进程广播退出信号X           |
    |true                 |    normal           |    接收到{'EXIT', Pid, nomal}            |
-   |true                 |    kill             |    消亡,向链接的进程广播退出信号(killed)     |
+   |true                 |    kill             |    消亡,向链接的进程广播退出信号(killed)    |
    |true                 |    X                |    将{'EXIT', Pid, X} 加入到邮箱          |
    #### 监视器(monitor)
    相关API

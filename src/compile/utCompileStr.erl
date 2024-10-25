@@ -100,7 +100,7 @@ scanAndParse(RemainingText, CurrFilename, CurrLine, RevForms, Errors, MacroMap, 
          end;
       {macro, NLine, NRemainingText, NMacroMap} ->
          scanAndParse(NRemainingText, CurrFilename, NLine, RevForms, Errors, NMacroMap, IncludeSearchPath);
-      {Def, NLine, NRemainingText, NMacroMap} when Def =:= def; Def =:= endif; Def =:= else;Def =:= undef; Def =:= attribute; Def =:= vsn ->
+      {Def, NLine, NRemainingText, NMacroMap} when Def =:= def; Def =:= endif; Def =:= 'else';Def =:= undef; Def =:= attribute; Def =:= vsn ->
          scanAndParse(NRemainingText, CurrFilename, NLine, RevForms, Errors, NMacroMap, IncludeSearchPath);
       {vsn, NLine, NRemainingText, NMacroMap} ->
          scanAndParse(NRemainingText, CurrFilename, NLine, RevForms, Errors, NMacroMap, IncludeSearchPath);
@@ -142,7 +142,7 @@ scanner(Text, Line, MacroMap) ->
                {include, NLine, LeftOverChars, Filename};
             {include_lib, Filename} ->
                {include_lib, NLine, LeftOverChars, Filename};
-            Def when Def =:= def; Def =:= endif; Def =:= else; Def =:= undef; Def =:= attribute; Def =:= vsn ->
+            Def when Def =:= def; Def =:= endif; Def =:= 'else'; Def =:= undef; Def =:= attribute; Def =:= vsn ->
                {Def, NLine, LeftOverChars, MacroMap}
          end;
       {more, {erl_scan_continuation, _, _, Tokens, NLine, _, Any, _} = _Continuation} ->
@@ -169,7 +169,7 @@ scanner(Text, Line, MacroMap) ->
                   {macro, NMacroMap} -> {macro, NLine, [], NMacroMap};
                   {include, Filename} -> {include, NLine, [], Filename};
                   {include_lib, Filename} -> {include_lib, NLine, [], Filename};
-                  Def when Def =:= def; Def =:= endif; Def =:= else; Def =:= undef; Def =:= attribute; Def =:= vsn ->
+                  Def when Def =:= def; Def =:= endif; Def =:= 'else'; Def =:= undef; Def =:= attribute; Def =:= vsn ->
                      {Def, NLine, [], MacroMap}
 
                end
@@ -237,8 +237,8 @@ preProc([{'-', _}, {atom, _, ifdef}, {'(', _}, _, {')', _}, {dot, _}], _MacroMap
    def;
 preProc([{'-', _}, {atom, _, endif}, {dot, _}], _MacroMap) ->
    endif;
-preProc([{'-', _}, {atom, _, else}, {dot, _}], _MacroMap) ->
-   else;
+preProc([{'-', _}, {atom, _, 'else'}, {dot, _}], _MacroMap) ->
+   'else';
 preProc([{'-', _}, {atom, _, undef}, {'(', _}, _, {')', _}, {dot, _}], _MacroMap) ->
    undef;
 preProc([{'-', _}, {atom, _, author}, {'(', _}, {'{', _}, {_, _, _}, {',', _}, {_, _, _}, {'}', _}, {')', _}, {dot, _}], _MacroMap) ->
