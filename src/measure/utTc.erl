@@ -7,8 +7,8 @@
    tc/1
    , tc/2
    , tc/3
-   , ts/4
-   , tm/5
+   , tc/4
+   , tc/5
    , test/1
 ]).
 
@@ -65,7 +65,7 @@ distribution([], _Aver, Greater, Less) ->
 %% ===================================================================
 %% test: one process test N times
 %% ===================================================================
-ts(LoopTime, M, F, A) ->
+tc(LoopTime, M, F, A) ->
    {Max, Min, Sum, Aver, Greater, Less} = loopTs(LoopTime, M, F, A, LoopTime, 0, 0, 0, []),
    io:format("=====================~n"),
    case A  of [] -> ArgsStr = <<>>; _ -> <<_:16, ArgsStr/binary>> = << <<", ", (iolist_to_binary(io_lib:format("~p", [OArg], [{chars_limit, 80}])))/binary>>  || OArg <- A>> end,
@@ -107,7 +107,7 @@ loopTs(Index, M, F, A, LoopTime, Max, Min, Sum, List) ->
 %% Concurrency test: N processes each test one time
 %% ===================================================================
 
-tm(ProcCnt, LoopTime, M, F, A) ->
+tc(ProcCnt, LoopTime, M, F, A) ->
    loopSpawn(ProcCnt, M, F, A, self(), LoopTime, []),
    {Max, Min, Sum, Aver, Greater, Less} = collector(ProcCnt, 0, 0, 0, ProcCnt, []),
    io:format("=====================~n"),
