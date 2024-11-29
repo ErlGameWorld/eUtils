@@ -108,33 +108,50 @@ getRandFromList(Num, List) ->
    List -- Result.
 
 
-%%打乱列表函数  List =[] 返回 打乱后列表 List2
-confuseList(List) ->
-   confuseList(List, []).
+%%打乱列表函数  List =[] 返回 打乱后列表 List2  元素小于300多个的时候 使用confuseList1 大于300多个的时候使用confuseList2  confuseList3各种数量级下 都比confuseList2 差
+%% 如果不确定数量级直接用 confuseList2
+%% ----------------------------------------------------
+confuseList1(List) ->
+   TupleList = list_to_tuple(List),
+   TupleSize = tuple_size(TupleList),
+   confuseList1(TupleSize, TupleSize, TupleList).
 
-confuseList(List, Result) ->
-   confuseList(List, rand:uniform_s(1, length(List)), Result).
+confuseList1(0, _TupleSize, TupleList) -> tuple_to_list(TupleList);
+confuseList1(Index, TupleSize, TupleList) ->
+   ChangeIndex = rand:uniform(TupleSize),
+   Value1 = element(Index, TupleList),
+   Value2 = element(ChangeIndex, TupleList),
+   TupleList1 = setelement(Index, TupleList, Value2),
+   TupleList2 = setelement(ChangeIndex, TupleList1, Value1),
+   confuseList1(Index - 1, TupleSize, TupleList2).
 
-confuseList(_List, 0, Result) ->
-   Result;
-confuseList(List, Nth, Result) ->
-   {NthData, Remain} = extract_member(rand:uniform_s(1, Nth), List),
-   confuseList(Remain, length(Remain), [NthData | Result]).
+confuseList2(List) ->
+   Array = array:from_list(List),
+   ArraySize = array:size(Array),
+   confuseList2(ArraySize, ArraySize, Array).
 
-%%提取列表中第Nth个元素，{NthData, RemainList}
-extract_member(Nth, List) ->
-   extract_member(Nth, List, []).
+confuseList2(0, _TupleSize, TupleList) -> array:to_list(TupleList);
+confuseList2(Index, TupleSize, TupleList) ->
+   ChangeIndex = rand:uniform(TupleSize),
+   Value1 = array:get(Index, TupleList),
+   Value2 = array:get(ChangeIndex, TupleList),
+   TupleList1 = array:set(Index, Value2, TupleList),
+   TupleList2 = array:set(ChangeIndex, Value1, TupleList1),
+   confuseList2(Index - 1, TupleSize, TupleList2).
 
-extract_member(1, List1, List2) ->
-   case List1 of
-      [R] ->
-         {R, List2};
-      [R | L] ->
-         {R, List2 ++ L}
-   end;
+transferMaps([], Index, Map) -> {Index - 1, Map};
+transferMaps([Element | List], Index, Map) ->
+   transferMaps(List, Index + 1, Map#{Index => Element}).
 
-extract_member(Nth, [R | List1], List2) ->
-   extract_member(Nth - 1, List1, List2 ++ [R]).
+confuseList3(List) ->
+   {Cnt, Map} = transferMaps(List, 1, #{}),
+   confuseList3(Cnt, Cnt, Map).
+
+confuseList3(0, _Size, Map) -> maps:values(Map);
+confuseList3(Index, Size, Map) ->
+   ChangeIndex = rand:uniform(Size),
+   #{Index := Value1, ChangeIndex := Value2} = Map,
+   confuseList3(Index - 1, Size, Map#{Index := Value2, ChangeIndex := Value1}).
 
 %%根数Tuple元素数量，把List转成Tuple 返回：{TupleList, RemainList}
 list_to_tuple(List, TupleCount) ->
