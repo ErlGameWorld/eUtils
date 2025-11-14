@@ -13,12 +13,14 @@
 	, tm/5
 	, tmc/4
 	, tmc/5
-
+	
 	, testTime/1
 	, testMem/1
 	, testOk/0
 	, testCrash/0
 ]).
+
+-type args() :: Fun :: function() | {Fun :: function(), Args :: [term()]} | {M :: module(), F :: atom(), Args :: [term()]}.
 
 %% Measure the execution time (in nanoseconds) for Fun().
 -spec tc(Fun :: function()) -> {TimeUsed :: integer(), Value :: term()}.
@@ -30,19 +32,21 @@ tc(F) ->
 	{TimeUsed, Val}.
 
 %% Measure the execution time (in nanoseconds) for Fun(Args).
--spec tc(Fun :: function(), Arguments :: [term()]) -> {TimeUsed :: integer(), Value :: term()}.
+-spec tc(Fun :: function(), Arguments :: args()) -> {TimeUsed :: integer(), Value :: term()}.
 tc(F, A) ->
+	Args = getArgs(A),
 	T1 = erlang:monotonic_time(),
-	Val = apply(F, A),
+	Val = apply(F, Args),
 	T2 = erlang:monotonic_time(),
 	TimeUsed = erlang:convert_time_unit(T2 - T1, native, nanosecond),
 	{TimeUsed, Val}.
 
 %% Measure the execution time (in nanoseconds) for an MFA.
--spec tc(Module :: module(), Function :: atom(), Arguments :: [term()]) -> {TimeUsed :: integer(), Value :: term()}.
+-spec tc(Module :: module(), Function :: atom(), Arguments :: args()) -> {TimeUsed :: integer(), Value :: term()}.
 tc(M, F, A) ->
+	Args = getArgs(A),
 	T1 = erlang:monotonic_time(),
-	Val = apply(M, F, A),
+	Val = apply(M, F, Args),
 	T2 = erlang:monotonic_time(),
 	TimeUsed = erlang:convert_time_unit(T2 - T1, native, nanosecond),
 	{TimeUsed, Val}.
@@ -60,7 +64,7 @@ tc(LoopTime, M, F, A) ->
 	{Greater, Less} = distribution(TimeList, Aver),
 	Percentiles = percentiles(TimeList, [50, 90, 95, 99]),
 	io:format("==========================================~n"),
-	case A of [] -> ArgsStr = <<>>; _ -> <<_:16, ArgsStr/binary>> = <<<<", ", (iolist_to_binary(io_lib:format("~0p", [OArg], [{chars_limit, 80}])))/binary>> || OArg <- A>> end,
+	ArgsStr = formatArgs(A),
 	io:format("execute ~p:~p(~s).~n", [M, F, ArgsStr]),
 	io:format("execute LoopTime:~p~n", [LoopTime]),
 	io:format("MinTime: ~15s(ns) ~15s(s)~n", [integer_to_binary(Min), float_to_binary(Min / 1000000000, [{decimals, 2}, compact])]),
@@ -89,7 +93,7 @@ tc(ProcCnt, LoopTime, M, F, A) ->
 	{Greater, Less} = distribution(TimeList, Aver),
 	Percentiles = percentiles(TimeList, [50, 90, 95, 99]),
 	io:format("==========================================~n"),
-	case A of [] -> ArgsStr = <<>>; _ -> <<_:16, ArgsStr/binary>> = <<<<", ", (iolist_to_binary(io_lib:format("~0p", [OArg], [{chars_limit, 80}])))/binary>> || OArg <- A>> end,
+	ArgsStr = formatArgs(A),
 	io:format("execute ~p:~p(~s).~n", [M, F, ArgsStr]),
 	io:format("execute LoopTime:~p~n", [LoopTime]),
 	io:format("execute ProcCnts:~p success:~p~n", [ProcCnt, TProcCnt]),
@@ -123,9 +127,9 @@ tm(LoopTime, M, F, A) ->
 	%% 计算统计信息
 	AvgPMem = PSum / LoopTime,
 	AvgVmMem = VmSum / LoopTime,
-
+	
 	io:format("==========================================~n"),
-	case A of [] -> ArgsStr = <<>>; _ -> <<_:16, ArgsStr/binary>> = <<<<", ", (iolist_to_binary(io_lib:format("~0p", [OArg], [{chars_limit, 80}])))/binary>> || OArg <- A>> end,
+	ArgsStr = formatArgs(A),
 	io:format("execute ~p:~p(~s).~n", [M, F, ArgsStr]),
 	io:format("LoopTime: ~p~n", [LoopTime]),
 	io:format("Base  memory(process|vm total): ~15s(bytes) ~15s(bytes)~n", [integer_to_binary(BeforePMem), integer_to_binary(BeforeVmMem)]),
@@ -157,7 +161,7 @@ tm(ProcCnt, LoopTime, M, F, A) ->
 	AvgPMem = PSum / CalcProcCnt,
 	AvgVmMem = VmSum / CalcProcCnt,
 	io:format("==========================================~n"),
-	case A of [] -> ArgsStr = <<>>; _ -> <<_:16, ArgsStr/binary>> = <<<<", ", (iolist_to_binary(io_lib:format("~0p", [OArg], [{chars_limit, 80}])))/binary>> || OArg <- A>> end,
+	ArgsStr = formatArgs(A),
 	io:format("execute ~p:~p(~s).~n", [M, F, ArgsStr]),
 	io:format("execute LoopTime:~p~n", [LoopTime]),
 	io:format("execute ProcCnts:~p success:~p~n", [ProcCnt, TProcCnt]),
@@ -186,13 +190,13 @@ tmc(LoopTime, M, F, A) ->
 	%% 再次强制垃圾回收，测量最终内存使用
 	garbage_collect(),
 	{AfterPMem, AfterVmMem} = getMem(),
-
+	
 	%% 计算统计信息
 	AvgPMem = PSum / LoopTime,
 	AvgVmMem = VmSum / LoopTime,
 	AvgTime = TSum / LoopTime,
 	io:format("==========================================~n"),
-	case A of [] -> ArgsStr = <<>>; _ -> <<_:16, ArgsStr/binary>> = <<<<", ", (iolist_to_binary(io_lib:format("~0p", [OArg], [{chars_limit, 80}])))/binary>> || OArg <- A>> end,
+	ArgsStr = formatArgs(A),
 	io:format("execute ~p:~p(~s).~n", [M, F, ArgsStr]),
 	io:format("LoopTime: ~p~n", [LoopTime]),
 	io:format("Base  memory(process|vm total): ~15s(bytes) ~15s(bytes)~n", [integer_to_binary(BeforePMem), integer_to_binary(BeforeVmMem)]),
@@ -224,12 +228,12 @@ tmc(ProcCnt, LoopTime, M, F, A) ->
 	%% 再次强制垃圾回收
 	garbage_collect(),
 	{AfterPMem, AfterVmMem} = getMem(),
-
+	
 	%% 计算统计信息
 	AvgPMem = PSum / CalcProcCnt,
 	AvgVmMem = VmSum / CalcProcCnt,
 	AvgTime = TSum / CalcProcCnt,
-	case A of [] -> ArgsStr = <<>>; _ -> <<_:16, ArgsStr/binary>> = <<<<", ", (iolist_to_binary(io_lib:format("~0p", [OArg], [{chars_limit, 80}])))/binary>> || OArg <- A>> end,
+	ArgsStr = formatArgs(A),
 	io:format("execute ~p:~p(~s).~n", [M, F, ArgsStr]),
 	io:format("execute LoopTime:~p~n", [LoopTime]),
 	io:format("execute ProcCnts:~p success:~p~n", [ProcCnt, TProcCnt]),
@@ -241,7 +245,7 @@ tmc(ProcCnt, LoopTime, M, F, A) ->
 	io:format("PSumTime                      : ~15s(ns) ~15s(s)~n", [integer_to_binary(TSum), float_to_binary(TSum / 1000000000, [{decimals, 2}, compact])]),
 	io:format("PAvgTime                      : ~15s(ns) ~15s(s)~n", [float_to_binary(float(AvgTime), [{decimals, 2}, compact]), float_to_binary(AvgTime / 1000000000, [{decimals, 2}, compact])]),
 	io:format("FAvgTime                      : ~15s(ns) ~15s(s)~n", [float_to_binary(AvgTime / LoopTime, [{decimals, 2}, compact]), float_to_binary(AvgTime / LoopTime / 1000000000, [{decimals, 2}, compact])]),
-   io:format("PMin process memory           : ~15s(bytes)~n", [float_to_binary(float(PMin), [{decimals, 2}, compact])]),
+	io:format("PMin process memory           : ~15s(bytes)~n", [float_to_binary(float(PMin), [{decimals, 2}, compact])]),
 	io:format("PMax process memory           : ~15s(bytes)~n", [float_to_binary(float(PMax), [{decimals, 2}, compact])]),
 	io:format("FAvg process memory           : ~15s(bytes)~n", [float_to_binary(float(AvgPMem), [{decimals, 2}, compact])]),
 	io:format("PVmMin vm memory              : ~15s(bytes)~n", [float_to_binary(float(VmMin), [{decimals, 2}, compact])]),
@@ -367,18 +371,19 @@ loopMTc(LoopTime, M, F, A, SumTime) ->
 loopMTm(0, _, _, _, PMin, PMax, PSum, VmMax, VmMin, VmSum) ->
 	{PMin, PMax, PSum, VmMin, VmMax, VmSum};
 loopMTm(LoopTime, M, F, A, PMin, PMax, PSum, VmMin, VmMax, VmSum) ->
+	Args = getArgs(A),
 	%% 每次执行前强制垃圾回收，确保测量准确
 	garbage_collect(),
 	%% 测量执行前的内存
 	{SPMem, SVmMem} = getMem(),
 	%% 执行函数
-	apply(M, F, A),
+	apply(M, F, Args),
 	%% 测量执行后的内存
 	{EPMem, EVmMem} = getMem(),
 	%% 计算内存增量
 	PUsed = EPMem - SPMem,
 	VmUsed = EVmMem - SVmMem,
-
+	
 	NewPSum = PSum + PUsed,
 	NewVmSum = VmSum + VmUsed,
 	{NewPMin, NewPMax} = compare(PMin, PMax, PUsed),
@@ -389,13 +394,14 @@ loopMTm(LoopTime, M, F, A, PMin, PMax, PSum, VmMin, VmMax, VmSum) ->
 loopMTmc(0, _, _, _, PMin, PMax, PSum, VmMin, VmMax, VmSum, TimeSum) ->
 	{PMin, PMax, PSum, VmMin, VmMax, VmSum, TimeSum};
 loopMTmc(LoopTime, M, F, A, PMin, PMax, PSum, VmMin, VmMax, VmSum, TimeSum) ->
+	Args = getArgs(A),
 	%% 每次执行前强制垃圾回收，确保测量准确
 	garbage_collect(),
 	%% 测量执行前的内存
 	{SPMem, SVmMem} = getMem(),
 	T1 = erlang:monotonic_time(),
 	%% 执行函数
-	apply(M, F, A),
+	apply(M, F, Args),
 	T2 = erlang:monotonic_time(),
 	%% 测量执行后的内存
 	{EPMem, EVmMem} = getMem(),
@@ -421,12 +427,13 @@ loopSTc(Index, M, F, A, LoopTime, Min, Max, Sum, List) ->
 loopSTm(0, _M, _F, _A, _LoopTime, PMin, PMax, PSum, VmMin, VmMax, VmSum) ->
 	{PMin, PMax, PSum, VmMin, VmMax, VmSum};
 loopSTm(Index, M, F, A, LoopTime, PMin, PMax, PSum, VmMin, VmMax, VmSum) ->
+	Args = getArgs(A),
 	%% 每次执行前强制垃圾回收，确保测量准确
 	garbage_collect(),
 	%% 测量执行前的内存
 	{SPMem, SVmMem} = getMem(),
 	%% 执行函数
-	apply(M, F, A),
+	apply(M, F, Args),
 	%% 测量执行后的内存
 	{EPMem, EVmMem} = getMem(),
 	%% 计算内存增量
@@ -440,13 +447,14 @@ loopSTm(Index, M, F, A, LoopTime, PMin, PMax, PSum, VmMin, VmMax, VmSum) ->
 loopSTmc(0, _M, _F, _A, _LoopTime, PMin, PMax, PSum, VmMin, VmMax, VmSum, TMin, TMax, TSum) ->
 	{PMin, PMax, PSum, VmMin, VmMax, VmSum, TMin, TMax, TSum};
 loopSTmc(Index, M, F, A, LoopTime, PMin, PMax, PSum, VmMin, VmMax, VmSum, TMin, TMax, TSum) ->
+	Args = getArgs(A),
 	%% 每次执行前强制垃圾回收，确保测量准确
 	garbage_collect(),
 	%% 测量执行前的内存
 	{SPMem, SVmMem} = getMem(),
 	%% 测量执行时间
 	T1 = erlang:monotonic_time(),
-	apply(M, F, A),
+	apply(M, F, Args),
 	T2 = erlang:monotonic_time(),
 	%% 测量执行后的内存
 	{EPMem, EVmMem} = getMem(),
@@ -461,10 +469,28 @@ loopSTmc(Index, M, F, A, LoopTime, PMin, PMax, PSum, VmMin, VmMax, VmSum, TMin, 
 
 %% 获取执行时间
 doTc(M, F, A) ->
+	Args = getArgs(A),
 	T1 = erlang:monotonic_time(),
-	apply(M, F, A),
+	apply(M, F, Args),
 	T2 = erlang:monotonic_time(),
 	erlang:convert_time_unit(T2 - T1, native, nanosecond).
+
+getArgs(Fun) when is_function(Fun) -> Fun();
+getArgs({Fun, Args}) when is_function(Fun) -> apply(Fun, Args);
+getArgs({M, F, Args}) -> apply(M, F, Args);
+getArgs(A) when is_list(A) -> A.
+
+formatArgs(Fun) when is_function(Fun) ->
+	iolist_to_binary(io_lib:format("~0p", [Fun], [{chars_limit, 80}]));
+formatArgs({Fun, Args}) when is_function(Fun) ->
+	case Args of [] -> ArgsStr = <<>>; _ -> <<_:16, ArgsStr/binary>> = <<<<", ", (iolist_to_binary(io_lib:format("~0p", [OArg], [{chars_limit, 80}])))/binary>> || OArg <- Args>> end,
+	<<(iolist_to_binary(io_lib:format("~0p(", [Fun], [{chars_limit, 80}])))/binary, ArgsStr/binary, ")">>;
+formatArgs({M, F, Args}) ->
+	case Args of [] -> ArgsStr = <<>>; _ -> <<_:16, ArgsStr/binary>> = <<<<", ", (iolist_to_binary(io_lib:format("~0p", [OArg], [{chars_limit, 80}])))/binary>> || OArg <- Args>> end,
+	<<(iolist_to_binary(io_lib:format("~0p:~0p(", [M, F], [{chars_limit, 80}])))/binary, ArgsStr/binary, ")">>;
+formatArgs(Args) when is_list(Args) ->
+	case Args of [] -> ArgsStr = <<>>; _ -> <<_:16, ArgsStr/binary>> = <<<<", ", (iolist_to_binary(io_lib:format("~0p", [OArg], [{chars_limit, 80}])))/binary>> || OArg <- Args>> end,
+	ArgsStr.
 
 %% 获取当前进程的内存使用情况
 getMem() ->
