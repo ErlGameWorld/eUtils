@@ -1,7 +1,8 @@
 -module(utKvsToBeam).
 
 -export([
-   load/2
+	load/2
+	, load/3
 ]).
 
 %% 注意 map类型的数据不能当做key
@@ -10,33 +11,35 @@
 
 -spec load(term(), [{key(), value()}]) -> ok.
 load(Module, KVs) ->
-   Forms = forms(Module, KVs),
-   {ok, Module, Bin} = compile:forms(Forms),
-   code:soft_purge(Module),
-   {module, Module} = code:load_binary(Module, [], Bin),
-   ok.
+	load(Module, KVs, undefined).
+load(Module, KVs, DefValue) ->
+	Forms = forms(Module, KVs, DefValue),
+	{ok, Module, Bin} = compile:forms(Forms),
+	code:soft_purge(Module),
+	{module, Module} = code:load_binary(Module, [], Bin),
+	ok.
 
-forms(Module, KVs) ->
-   %% -module(Module).
-   Mod = erl_syntax:attribute(erl_syntax:atom(module), [erl_syntax:atom(Module)]),
-   %% -export([getV/0]).
-   ExportList = [erl_syntax:arity_qualifier(erl_syntax:atom(getV), erl_syntax:integer(1))],
-   Export = erl_syntax:attribute(erl_syntax:atom(export), [erl_syntax:list(ExportList)]),
-   %% getV(K) -> V
-   Function = erl_syntax:function(erl_syntax:atom(getV), lookup_clauses(KVs, [])),
-   [erl_syntax:revert(X) || X <- [Mod, Export, Function]].
+forms(Module, KVs, DefValue) ->
+	%% -module(Module).
+	Mod = erl_syntax:attribute(erl_syntax:atom(module), [erl_syntax:atom(Module)]),
+	%% -export([getV/0]).
+	ExportList = [erl_syntax:arity_qualifier(erl_syntax:atom(getV), erl_syntax:integer(1))],
+	Export = erl_syntax:attribute(erl_syntax:atom(export), [erl_syntax:list(ExportList)]),
+	%% getV(K) -> V
+	Function = erl_syntax:function(erl_syntax:atom(getV), lookup_clauses(KVs, DefValue, [])),
+	[erl_syntax:revert(X) || X <- [Mod, Export, Function]].
 
 lookup_clause(Key, Value) ->
-   Var = erl_syntax:abstract(Key),
-   Body = erl_syntax:abstract(Value),
-   erl_syntax:clause([Var], [], [Body]).
+	Var = erl_syntax:abstract(Key),
+	Body = erl_syntax:abstract(Value),
+	erl_syntax:clause([Var], [], [Body]).
 
-lookup_clause_anon() ->
-   Var = erl_syntax:variable("_"),
-   Body = erl_syntax:atom(undefined),
-   erl_syntax:clause([Var], [], [Body]).
+lookup_clause_anon(DefValue) ->
+	Var = erl_syntax:variable("_"),
+	Body = erl_syntax:abstract(DefValue),
+	erl_syntax:clause([Var], [], [Body]).
 
-lookup_clauses([], Acc) ->
-   lists:reverse(lists:flatten([lookup_clause_anon() | Acc]));
-lookup_clauses([{Key, Value} | T], Acc) ->
-   lookup_clauses(T, [lookup_clause(Key, Value) | Acc]).
+lookup_clauses([], DefValue, Acc) ->
+	lists:reverse(lists:flatten([lookup_clause_anon(DefValue) | Acc]));
+lookup_clauses([{Key, Value} | T], DefValue, Acc) ->
+	lookup_clauses(T, DefValue, [lookup_clause(Key, Value) | Acc]).
