@@ -61,7 +61,7 @@
 %%%         inet ports, statistics and options for each socket.</dd>
 %%%     <dd>Finally, the functions {@link inet_count/2} and {@link inet_window/3}
 %%%         provide the absolute or sliding window functionality of
-%%%         {@link proc_count/2} and {@link proc_count/3} to inet ports
+%%%         {@link proc_count/2} and {@link proc_window/3} to inet ports
 %%%         and connections currently on the node.</dd>
 %%%
 %%%     <dt>5. RPC</dt>
@@ -174,6 +174,7 @@ info(A,B,C, Key) -> info(recon_lib:triple_to_pid(A,B,C), Key).
 %% another registry supported in the `{via, Module, Name}' syntax (must have a
 %% `Module:whereis_name/1' function). Pids can also be passed in as a string
 %% (`"<0.39.0>"') or a triple (`{0,39,0}') and will be converted to be used.
+%% Returns `undefined' as a value when a process died.
 -spec info(pid_term()) -> [{info_type(), [{info_key(), Value}]},...] when
       Value :: term().
 info(PidTerm) ->
@@ -197,9 +198,10 @@ info(PidTerm) ->
 %%
 %% A fake attribute `binary_memory' is also available to return the
 %% amount of memory used by refc binaries for a process.
--spec info(pid_term(), info_type()) -> {info_type(), [{info_key(), term()}]}
-    ;     (pid_term(), [atom()]) -> [{atom(), term()}]
-    ;     (pid_term(), atom()) -> {atom(), term()}.
+-dialyzer({no_contracts, info/2}). % ... Overloaded contract for recon:info/2 has overlapping domains
+-spec info(pid_term(), info_type()) -> {info_type(), [{info_key(), term()}] | undefined}
+    ;     (pid_term(), [atom()]) -> [{atom(), term()}] | undefined
+    ;     (pid_term(), atom()) -> {atom(), term()} | undefined.
 info(PidTerm, meta) ->
     info_type(PidTerm, meta, [registered_name, dictionary, group_leader,
                               status]);
@@ -225,8 +227,12 @@ info_type(PidTerm, Type, Keys) ->
 %% @private wrapper around `erlang:process_info/2' that allows special
 %% attribute handling for items like `binary_memory'.
 proc_info(Pid, binary_memory) ->
-    {binary, Bins} = erlang:process_info(Pid, binary),
-    {binary_memory, recon_lib:binary_memory(Bins)};
+    case erlang:process_info(Pid, binary) of
+        undefined ->
+            undefined;
+        {binary, Bins} ->
+            {binary_memory, recon_lib:binary_memory(Bins)}
+    end;
 proc_info(Pid, Term) when is_atom(Term) ->
     erlang:process_info(Pid, Term);
 proc_info(Pid, List) when is_list(List) ->
@@ -376,13 +382,13 @@ node_stats_list(N, Interval) ->
 %%
 %% Absolutes are values that keep changing with time, and are useful to know
 %% about as a datapoint: process count, size of the run queue, error_logger
-%% queue length in versions before OTP-21 or those thar run it explicitely,
+%% queue length in versions before OTP-21 or those thar run it explicitly,
 %% and the memory of the node (total, processes, atoms, binaries,
 %% and ets tables).
 %%
 %% Increments are values that are mostly useful when compared to a previous
 %% one to have an idea what they're doing, because otherwise they'd never
-%% stop increasing: bytes in and out of the node, number of garbage colelctor
+%% stop increasing: bytes in and out of the node, number of garbage collector
 %% runs, words of memory that were garbage collected, and the global reductions
 %% count for the node.
 -spec node_stats(N, Interval, FoldFun, Acc) -> Acc when
@@ -491,7 +497,7 @@ remote_load(Mod) -> remote_load(nodes(), Mod).
       Nodes :: [node(),...] | node().
 remote_load(Nodes=[_|_], Mod) when is_atom(Mod) ->
     {Mod, Bin, File} = code:get_object_code(Mod),
-    erpc:multicall(Nodes, code, load_binary, [Mod, File, Bin]);
+    rpc:multicall(Nodes, code, load_binary, [Mod, File, Bin]);
 remote_load(Nodes=[_|_], Modules) when is_list(Modules) ->
     [remote_load(Nodes, Mod) || Mod <- Modules];
 remote_load(Node, Mod) ->
@@ -508,6 +514,7 @@ source(Module) ->
     Path = code:which(Module),
     {ok,{_,[{abstract_code,{_,AC}}]}} = beam_lib:chunks(Path, [abstract_code]),
     erl_prettypr:format(erl_syntax:form_list(AC)).
+-dialyzer({nowarn_function, source/1}).
 
 %%% Ports Info %%%
 
@@ -607,6 +614,7 @@ port_info(PortTerm) ->
 %% as defined in {@link port_info_type()}, and although the type signature
 %% doesn't show it in the generated documentation, individual items
 %% accepted by `erlang:port_info/2' are accepted, and lists of them too.
+-dialyzer({no_contracts, port_info/2}). % ... Overloaded contract for recon:port_info/2 has overlapping domains
 -spec port_info(port_term(), port_info_type()) -> {port_info_type(),
                                                    [{port_info_key(), _}]}
     ;          (port_term(), [atom()]) -> [{atom(), term()}]
@@ -689,7 +697,7 @@ rpc(Nodes, Fun) ->
 %% @doc Runs an arbitrary fun (of arity 0) over one or more nodes.
 -spec rpc(node()|[node(),...], fun(() -> term()), timeout()) -> {[Success::_],[Fail::_]}.
 rpc(Nodes=[_|_], Fun, Timeout) when is_function(Fun,0) ->
-    erpc:multicall(Nodes, erlang, apply, [Fun,[]], Timeout);
+    rpc:multicall(Nodes, erlang, apply, [Fun,[]], Timeout);
 rpc(Node, Fun, Timeout) when is_atom(Node) ->
     rpc([Node], Fun, Timeout).
 
@@ -707,7 +715,7 @@ named_rpc(Nodes, Fun) ->
 %% name of the node that computed a given result along with it, in a tuple.
 -spec named_rpc(node()|[node(),...], fun(() -> term()), timeout()) -> {[Success::_],[Fail::_]}.
 named_rpc(Nodes=[_|_], Fun, Timeout) when is_function(Fun,0) ->
-    erpc:multicall(Nodes, erlang, apply, [fun() -> {node(),Fun()} end,[]], Timeout);
+    rpc:multicall(Nodes, erlang, apply, [fun() -> {node(),Fun()} end,[]], Timeout);
 named_rpc(Node, Fun, Timeout) when is_atom(Node) ->
     named_rpc([Node], Fun, Timeout).
 

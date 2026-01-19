@@ -753,8 +753,8 @@ good(Variable, VariableName) ->
 -define(OTHER_MODULE, other_module).
 -define(LOG_ERROR(Error),
         error_logger:error_msg(
-          "~p:~p >> Error: ~p~n\tStack: ~p",
-          [?MODULE, ?LINE, Error, erlang:get_stacktrace()])).
+          "~p:~p >> Error: ~p~n",
+          [?MODULE, ?LINE, Error])).
 
 -define(HTTP_CREATED, 201).
 
@@ -778,8 +778,8 @@ good() ->
 
 log_error(Line, Error) ->
   error_logger:error_msg(
-    "~p:~p >> Error: ~p~n\tStack: ~p",
-    [?MODULE, Line, Error, erlang:get_stacktrace()]).
+    "~p:~p >> Error: ~p~n",
+    [?MODULE, Line, Error]).
 ```
 
 *原因*: 宏的使用不利于调试工作的进行. 如果你尝试用它们来避免重复的代码块，可以使用以下函数去实现。

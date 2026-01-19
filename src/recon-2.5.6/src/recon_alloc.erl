@@ -15,7 +15,7 @@
 %%% a problem, but will offer little help to figure out <em>what</em> is wrong.
 %%%
 %%% To figure this out, you need to dig deeper into the allocator data
-%%% (obtainable with {@link allocators/0}), and/or have some precise knowledge
+%%% (obtainable with {@link allocators/1}), and/or have some precise knowledge
 %%% about the type of load and work done by the VM to be able to assess what
 %%% each reaction to individual tweak should be.
 %%%
@@ -300,7 +300,7 @@ cache_hit_rates() ->
 %% allocation strategies regarding the carrier sizes to be used.
 %%
 %% This function isn't exceptionally useful unless you know you have some
-%% specific problem, say with sbcs/mbcs ratios (see {@link sbcs_to_mbcs/0})
+%% specific problem, say with sbcs/mbcs ratios (see {@link sbcs_to_mbcs/1})
 %% or fragmentation for a specific allocator, and want to figure out what
 %% values to pick to increase or decrease sizes compared to the currently
 %% configured value.
@@ -369,11 +369,13 @@ sbcs_to_mbcs(Keyword) ->
 allocators() ->
     UtilAllocators = erlang:system_info(alloc_util_allocators),
     Allocators = [sys_alloc,mseg_alloc|UtilAllocators],
-    [{{A,N}, format_alloc(A, Props)} ||
-        A <- Allocators,
-        Allocs <- [erlang:system_info({allocator,A})],
-        Allocs =/= false,
-        {_,N,Props} <- Allocs].
+    try [{{erts_mmap,0},erlang:system_info({allocator,erts_mmap})}]
+    catch error:badarg -> [] end ++
+        [{{A,N}, format_alloc(A, Props)} ||
+            A <- Allocators,
+            Allocs <- [erlang:system_info({allocator,A})],
+            Allocs =/= false,
+            {_,N,Props} <- Allocs].
 
 format_alloc(Alloc, Props) ->
     %% {versions,_,_} is implicitly deleted in order to allow the use of the
@@ -406,7 +408,9 @@ format_blocks(Alloc, Key, [{blocks, L} | List]) when is_list(L) ->
     MergeF = fun(K) ->
         fun({_A, Props}, Acc) ->
             case lists:keyfind(K, 1, Props) of
-                {K,Cur,Last,Max} -> {Cur, Last, Max};
+                {K,Cur,Last,Max} ->
+                    {AccCur, AccLast, AccMax} = Acc,
+                    {AccCur + Cur, AccLast + Last, AccMax + Max};
                 {K,V} -> Acc+V
             end
         end
@@ -507,7 +511,7 @@ sort_values(_Type, Vs) ->
 %% @doc Take a new snapshot of the current memory allocator statistics.
 %% The snapshot is stored in the process dictionary of the calling process,
 %% with all the limitations that it implies (i.e. no garbage-collection).
-%% To unsert the snapshot, see {@link snapshot_clear/1}.
+%% To unsert the snapshot, see {@link snapshot_clear/0}.
 -spec snapshot() -> snapshot() | undefined.
 snapshot() ->
     put(recon_alloc_snapshot, snapshot_int()).
@@ -533,7 +537,7 @@ snapshot_get() ->
     get(recon_alloc_snapshot).
 
 %% @doc save the current snapshot taken by {@link snapshot/0} to a file.
-%% If there is no current snapshot, a snaphot of the current allocator
+%% If there is no current snapshot, a snapshot of the current allocator
 %% statistics will be written to the file.
 -spec snapshot_save(Filename) -> ok when
       Filename :: file:name().
@@ -552,7 +556,7 @@ snapshot_save(Filename) ->
 
 
 %% @doc load a snapshot from a given file. The format of the data in the
-%% file can be either the same as output by {@link snapshot_save()},
+%% file can be either the same as output by {@link snapshot_save/1},
 %% or the output obtained by calling
 %%  `{erlang:memory(),[{A,erlang:system_info({allocator,A})} || A <- erlang:system_info(alloc_util_allocators)++[sys_alloc,mseg_alloc]]}.'
 %% and storing it in a file.
@@ -636,6 +640,8 @@ conv_mem(Mem,Factor) ->
 
 conv_alloc([{{sys_alloc,_I},_Props} = Alloc|R], Factor) ->
     [Alloc|conv_alloc(R,Factor)];
+conv_alloc([{{erts_mmap,_I},_Props} = Alloc|R], Factor) ->
+    [Alloc|conv_alloc(R,Factor)];
 conv_alloc([{{mseg_alloc,_I} = AI,Props}|R], Factor) ->
     MemKind = orddict:fetch(memkind,Props),
     Status = orddict:fetch(status,MemKind),
@@ -697,7 +703,7 @@ weighed_values({SbcsBlockSize, SbcsCarrierSize},
 %% but also takes 0/0 to be 100% to make working with sorting and
 %% weights simpler.
 usage(0,0) -> 1.00;
-usage(0.0,0.0) -> 1.00;
+usage(+0.0,+0.0) -> 1.00;
 %usage(N,0) -> ???;
 usage(Block,Carrier) -> Block/Carrier.
 

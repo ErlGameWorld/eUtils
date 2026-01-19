@@ -29,6 +29,9 @@
    
 # timeData目录
     获取各种本地时间与世界时间，以及本地时间与世界时间相互转换的时间函数封装    
+    C++20 代码逻辑没问题：代码本身是完美的。
+    依赖问题：C++20 的时区库强依赖操作系统本地的 /usr/share/zoneinfo 数据。
+    运维动作：务必确保你的生产环境 Dockerfile 里有一行 apt-get install tzdata 或 apk add tzdata。只要有了这个包，你的 NIF 就能正常工作。
     
 # md5 目录
     封装了Md5UUid的函数    

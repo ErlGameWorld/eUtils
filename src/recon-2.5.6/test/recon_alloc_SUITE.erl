@@ -4,7 +4,7 @@
 %%% conformance and obvious changes more than anything.
 -module(recon_alloc_SUITE).
 -include_lib("common_test/include/ct.hrl").
--compile([export_all, nowarn_export_all]).
+-compile(export_all).
 
 all() -> [memory, fragmentation, cache_hit_rates, average_block_sizes,
           sbcs_to_mbcs, allocators, allocators_merged, snapshots, units].

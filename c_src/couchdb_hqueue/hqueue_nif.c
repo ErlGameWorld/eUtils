@@ -14,6 +14,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#include <erl_nif.h>
+
 #include "hqueue.h"
 
 
@@ -112,9 +114,9 @@ hqueue_nif_node_free_ext(void* node)
 hqnode_nif_t*
 hqueue_nif_node_alloc()
 {
-    hqnode_nif_t* node = (hqnode_nif_t*) enif_alloc(sizeof(hqnode_nif_t*));
+    hqnode_nif_t* node = (hqnode_nif_t*) enif_alloc(sizeof(hqnode_nif_t));
 
-    memset(node, 0, sizeof(hqnode_nif_t));
+   memset(node, 0, sizeof(hqnode_nif_t));
 
     node->env = enif_alloc_env();
 
@@ -599,3 +601,4 @@ static ErlNifFunc funcs[] = {
 
 
 ERL_NIF_INIT(hqueue, funcs, &load, NULL, &upgrade, &unload);
+

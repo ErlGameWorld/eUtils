@@ -1,7 +1,7 @@
 -module(utTime).
 -include("utTime.hrl").
 
--import(calendar, [day_of_the_week/1, day_of_the_week/3, iso_week_number/1, date_to_gregorian_days/1]).
+-import(calendar, [day_of_the_week/1, day_of_the_week/3, iso_week_number/1, date_to_gregorian_days/1, gregorian_days_to_date/1]).
 
 -export([
    now/0                            %% 当前的时间戳 秒
@@ -18,7 +18,7 @@
    , secToUDateTime/1               %% 将秒单位的时间戳 转为世界 datetime()
    , lDateTimeToSec/1               %% 将本地的 datetime() 转为秒单位的时间戳
    , uDateTimeToSec/1               %% 将世界的 datetime() 转为秒单位的时间戳
-   , timeZoneDiff/0                 %% 获取本地时区与UTC时区 时间差 单位秒 由于某些时区存在夏令时 下面的计算在不同时候 可能会返回不同的值 所以并不能只计算一次 需要在每次用到的时候 重新计算
+   , timeZoneDiff/0                 %% 获取本地时区与UTC时区 时间差 单位秒
    , countLDay/1                    %% 计算1970年到Sec 本地经过了多少天
    , countUDay/1                    %% 计算1970年到Sec 世界经过了多少天
    , isSameLDay/2                   %% 判断两个时间戳是否为本地的同一天
@@ -29,16 +29,16 @@
    , isSameUWeek/2                  %% 判断两个时间戳是否为本地的同一周
    , isSameLMonth/2                 %% 判断两个时间戳是否为本地的同一月
    , isSameUMonth/2                 %% 判断两个时间戳是否为世界的同一月
-   , countLDay/2                    %% 计算1970年到Sec 本地经过了多少天 ZeroOffset为零点偏移时间
-   , countUDay/2                    %% 计算1970年到Sec 世界经过了多少天 ZeroOffset为零点偏移时间
-   , isSameLDay/3                   %% 判断两个时间戳是否为同一天 ZeroOffset为零点偏移时间
-   , isSameUDay/3                   %% 判断两个时间戳是否为同一天 ZeroOffset为零点偏移时间
-   , countLWeek/2                   %% 计算1970年到Sec 本地经过了多少周 ZeroOffset为零点偏移时间
-   , countUWeek/2                   %% 计算1970年到Sec 世界经过了多少周 ZeroOffset为零点偏移时间
-   , isSameLWeek/3                  %% 判断两个时间戳是否为同一周 ZeroOffset为零点偏移时间
-   , isSameUWeek/3                  %% 判断两个时间戳是否为同一周 ZeroOffset为零点偏移时间
-   , isSameLMonth/3                 %% 判断两个时间戳是否为本地的同一月 ZeroOffset为零点偏移时间
-   , isSameUMonth/3                 %% 判断两个时间戳是否为世界的同一月 ZeroOffset为零点偏移时间
+   , countLDay/2                    %% 计算1970年到Sec 本地经过了多少天 ZeroOffset
+   , countUDay/2                    %% 计算1970年到Sec 世界经过了多少天 ZeroOffset
+   , isSameLDay/3                   %% 判断两个时间戳是否为同一天 ZeroOffset
+   , isSameUDay/3                   %% 判断两个时间戳是否为同一天 ZeroOffset
+   , countLWeek/2                   %% 计算1970年到Sec 本地经过了多少周 ZeroOffset
+   , countUWeek/2                   %% 计算1970年到Sec 世界经过了多少周 ZeroOffset
+   , isSameLWeek/3                  %% 判断两个时间戳是否为同一周 ZeroOffset
+   , isSameUWeek/3                  %% 判断两个时间戳是否为同一周 ZeroOffset
+   , isSameLMonth/3                 %% 判断两个时间戳是否为本地的同一月 ZeroOffset
+   , isSameUMonth/3                 %% 判断两个时间戳是否为世界的同一月 ZeroOffset
    , hourBegin/0                    %% 当前小时开始时间戳
    , hourBegin/1                    %% Sec所在小时开始时间戳
    , hourEnd/0                      %% 当前小时结束时间戳
@@ -96,17 +96,17 @@
    , diffLDateTimeDayTime/2         %% 计算两个本地datetime() 时间差 返回单位 daytime()
    , diffUDateTimeDayTime/2         %% 计算两个世界datetime() 时间差 返回单位 daytime()
    , diffSecs/2                     %% 计算两个秒单位的 时间戳的时间差 返回单位 daytime()
-   , timeToSec/1                   %% 转换 time() 为 秒数
+   , timeToSec/1                    %% 转换 time() 为 秒数
    , daysInYear/1                   %% 计算 Date为该年的哪一天
-   , dateToStr/1                    %%  Data to Str
-   , dateToStr/3                    %%  Data to Str
-   , dateToStr/2                    %%  Data to Str
-   , dateToStr/4                    %%  Data to Str
-   , timeToStr/1                    %%  time to Str
-   , timeToStr/3                    %%  time to Str
-   , timeToStr/2                    %%  time to Str
-   , timeToStr/4                    %%  time to Str
-   , dateTimeStr/1                  %%  datetime to Str
+   , dateToStr/1                    %% Data to Str
+   , dateToStr/3                    %% Data to Str
+   , dateToStr/2                    %% Data to Str
+   , dateToStr/4                    %% Data to Str
+   , timeToStr/1                    %% time to Str
+   , timeToStr/3                    %% time to Str
+   , timeToStr/2                    %% time to Str
+   , timeToStr/4                    %% time to Str
+   , dateTimeStr/1                  %% datetime to Str
 ]).
 
 %% 当前的时间戳 秒
@@ -122,22 +122,24 @@ nowMs() ->
 %% 当前的日期
 -spec curDateTime() -> datetime().
 curDateTime() ->
-   erlang:localtime().
+   secToLDateTime(erlang:system_time(second)).
 
 %% 当前的年月日
 -spec curDate() -> date().
 curDate() ->
-   erlang:date().
+   {Date, _} = curDateTime(),
+   Date.
 
 %% 当前的时分秒
 -spec curTime() -> time().
 curTime() ->
-   erlang:time().
+   {_, Time} = curDateTime(),
+   Time.
 
 %% 当前星期几
 -spec weekDay() -> week().
 weekDay() ->
-   day_of_the_week(erlang:date()).
+   day_of_the_week(curDate()).
 
 %% 计算Data是星期几
 -spec weekDay(Date :: date()) -> week().
@@ -152,7 +154,7 @@ weekDay(Year, Month, Day) ->
 %% 计算当前的星期周期
 -spec weekCycle() -> yearWeekCycle().
 weekCycle() ->
-   iso_week_number(erlang:date()).
+   iso_week_number(curDate()).
 
 %% 计算 Date 的星期周期
 -spec weekCycle(Date :: date()) -> yearWeekCycle().
@@ -161,34 +163,34 @@ weekCycle(Date) ->
 
 %% 将秒单位的时间戳 转为本地 datetime()
 -spec secToLDateTime(Sec :: timestamp()) -> datetime().
-secToLDateTime(Ses) ->
-   erlang:universaltime_to_localtime(erlang:posixtime_to_universaltime(Ses)).
+secToLDateTime(Sec) ->
+   eNifFtz:universal_time_to_local_time(erlang:posixtime_to_universaltime(Sec)).
 
 %% 将秒单位的时间戳 转为世界 datetime()
 -spec secToUDateTime(Sec :: timestamp()) -> datetime().
-secToUDateTime(Ses) ->
-   erlang:posixtime_to_universaltime(Ses).
+secToUDateTime(Sec) ->
+   erlang:posixtime_to_universaltime(Sec).
 
 %% 将本地的 datetime() 转为秒单位的时间戳
 -spec lDateTimeToSec(LocalDate :: datetime()) -> timestamp().
 lDateTimeToSec(LocalDate) ->
-   erlang:universaltime_to_posixtime(erlang:localtime_to_universaltime(LocalDate)).
+   erlang:universaltime_to_posixtime(eNifFtz:local_time_to_universal_time(LocalDate)).
 
 %% 将世界的 datetime() 转为秒单位的时间戳
 -spec uDateTimeToSec(UniversalTime :: datetime()) -> timestamp().
 uDateTimeToSec(UniversalTime) ->
    erlang:universaltime_to_posixtime(UniversalTime).
 
-%% 获取本地时区与UTC时区 时间差 单位秒 由于某些时区存在夏令时 下面的计算在不同时候 可能会返回不同的值 所以并不能只计算一次 需要在每次用到的时候 重新计算
+%% 获取本地时区与UTC时区 时间差 单位秒
 -spec timeZoneDiff() -> timestamp().
 timeZoneDiff() ->
-   Local2001 = erlang:universaltime_to_localtime({{2001, 1, 1}, {0, 0, 0}}),
-   erlang:universaltime_to_posixtime(Local2001) - 978307200.
+   eNifFtz:zone_offset().
 
 %% 计算1970年到Sec 本地经过了多少天
 -spec countLDay(Sec :: timestamp()) -> integer().
 countLDay(Sec) ->
-   (Sec + timeZoneDiff()) div ?SECS_DAY.
+   {{Year, Month, Day}, _} = secToLDateTime(Sec),
+   date_to_gregorian_days({Year, Month, Day}) - date_to_gregorian_days({1970, 1, 1}).
 
 %% 计算1970年到Sec 世界经过了多少天
 -spec countUDay(Sec :: timestamp()) -> integer().
@@ -198,8 +200,9 @@ countUDay(Sec) ->
 %% 判断两个时间戳是否为本地的同一天
 -spec isSameLDay(Sec1 :: timestamp(), Sec2 :: timestamp()) -> boolean().
 isSameLDay(Sec1, Sec2) ->
-   TimeZoneDiff = timeZoneDiff(),
-   (Sec1 + TimeZoneDiff) div ?SECS_DAY =:= (Sec2 + TimeZoneDiff) div ?SECS_DAY.
+   {D1, _} = secToLDateTime(Sec1),
+   {D2, _} = secToLDateTime(Sec2),
+   D1 =:= D2.
 
 %% 判断两个时间戳是否为本地的同一天
 -spec isSameUDay(Sec1 :: timestamp(), Sec2 :: timestamp()) -> boolean().
@@ -209,23 +212,26 @@ isSameUDay(Sec1, Sec2) ->
 %% 计算1970年到Sec 本地经过了多少周
 -spec countLWeek(Sec :: timestamp()) -> integer().
 countLWeek(Sec) ->
-   (Sec + 259200 + timeZoneDiff()) div ?SECS_WEEK.
+   Days = countLDay(Sec),
+   (Days + 3) div 7.
 
 %% 计算1970年到Sec 世界经过了多少周
 -spec countUWeek(Sec :: timestamp()) -> integer().
 countUWeek(Sec) ->
+   %% 1970-01-01 是周四。为了让周一成为 Week 0 的开始，我们需要偏移 +3 天 (259200秒)
+   %% 这样周四(Day 3) 就变成了 (3+3)=6，还不够，我们需要对齐到周一。
+   %% 实际上：(Sec + 3天) div 7天。
    (Sec + 259200) div ?SECS_WEEK.
 
 %% 判断两个时间戳是否为本地的同一周
 -spec isSameLWeek(Sec1 :: timestamp(), Sec2 :: timestamp()) -> boolean().
 isSameLWeek(Sec1, Sec2) ->
-   TimeZoneDiff = timeZoneDiff(),
-   (Sec1 + 259200 + TimeZoneDiff) div ?SECS_WEEK =:= (Sec2 + 259200 + TimeZoneDiff) div ?SECS_WEEK.
+   countLWeek(Sec1) =:= countLWeek(Sec2).
 
 %% 判断两个时间戳是否为本地的同一周
 -spec isSameUWeek(Sec1 :: timestamp(), Sec2 :: timestamp()) -> boolean().
 isSameUWeek(Sec1, Sec2) ->
-   (Sec1 + 259200) div ?SECS_WEEK =:= (Sec2 + 259200) div ?SECS_WEEK.
+   countUWeek(Sec1) =:= countUWeek(Sec2).
 
 %% 判断两个时间戳是否为本地的同一月
 -spec isSameLMonth(Sec1 :: timestamp(), Sec2 :: timestamp()) -> boolean().
@@ -244,7 +250,7 @@ isSameUMonth(Sec1, Sec2) ->
 %% 计算1970年到Sec 本地经过了多少天 ZeroOffset为零点偏移时间
 -spec countLDay(Sec :: timestamp(), ZeroOffset :: timestamp()) -> integer().
 countLDay(Sec, ZeroOffset) ->
-   (Sec - ZeroOffset + timeZoneDiff()) div ?SECS_DAY.
+   countLDay(Sec - ZeroOffset).
 
 %% 计算1970年到Sec 世界经过了多少天 ZeroOffset为零点偏移时间
 -spec countUDay(Sec :: timestamp(), ZeroOffset :: timestamp()) -> integer().
@@ -254,8 +260,7 @@ countUDay(Sec, ZeroOffset) ->
 %% 判断两个时间戳是否为同一天 ZeroOffset为零点偏移时间
 -spec isSameLDay(Sec1 :: timestamp(), Sec2 :: timestamp(), ZeroOffset :: timestamp()) -> boolean().
 isSameLDay(Sec1, Sec2, ZeroOffset) ->
-   TimeZoneDiff = timeZoneDiff(),
-   (Sec1 - ZeroOffset + TimeZoneDiff) div ?SECS_DAY =:= (Sec2 - ZeroOffset + TimeZoneDiff) div ?SECS_DAY.
+   isSameLDay(Sec1 - ZeroOffset, Sec2 - ZeroOffset).
 
 %% 判断两个时间戳是否为同一天 ZeroOffset为零点偏移时间
 -spec isSameUDay(Sec1 :: timestamp(), Sec2 :: timestamp(), ZeroOffset :: timestamp()) -> boolean().
@@ -265,7 +270,7 @@ isSameUDay(Sec1, Sec2, ZeroOffset) ->
 %% 计算1970年到Sec 本地经过了多少周 ZeroOffset为零点偏移时间
 -spec countLWeek(Sec :: timestamp(), ZeroOffset :: timestamp()) -> integer().
 countLWeek(Sec, ZeroOffset) ->
-   (Sec - ZeroOffset + 259200 + timeZoneDiff()) div ?SECS_WEEK.
+   countLWeek(Sec - ZeroOffset).
 
 %% 计算1970年到Sec 世界经过了多少周 ZeroOffset为零点偏移时间
 -spec countUWeek(Sec :: timestamp(), ZeroOffset :: timestamp()) -> integer().
@@ -275,8 +280,7 @@ countUWeek(Sec, ZeroOffset) ->
 %% 判断两个时间戳是否为同一周 ZeroOffset为零点偏移时间
 -spec isSameLWeek(Sec1 :: timestamp(), Sec2 :: timestamp(), ZeroOffset :: timestamp()) -> boolean().
 isSameLWeek(Sec1, Sec2, ZeroOffset) ->
-   TimeZoneDiff = timeZoneDiff(),
-   (Sec1 - ZeroOffset + 259200 + TimeZoneDiff) div ?SECS_WEEK =:= (Sec2 - ZeroOffset + 259200 + TimeZoneDiff) div ?SECS_WEEK.
+   isSameLWeek(Sec1 - ZeroOffset, Sec2 - ZeroOffset).
 
 %% 判断两个时间戳是否为同一周 ZeroOffset为零点偏移时间
 -spec isSameUWeek(Sec1 :: timestamp(), Sec2 :: timestamp(), ZeroOffset :: timestamp()) -> boolean().
@@ -300,41 +304,50 @@ isSameUMonth(Sec1, Sec2, ZeroOffset) ->
 %% 当前小时开始时间戳
 -spec hourBegin() -> timestamp().
 hourBegin() ->
-   Sec = erlang:system_time(second),
-   Sec - Sec rem ?SECS_HOUR.
+   hourBegin(erlang:system_time(second)).
 
 %% Sec所在小时开始时间戳
+%% [修正] 兼容半小时时区 (如 India +5:30)，必须基于本地时间计算
 -spec hourBegin(Sec :: timestamp()) -> timestamp().
 hourBegin(Sec) ->
-   Sec - Sec rem ?SECS_HOUR.
+   {{Y, M, D}, {H, _, _}} = secToLDateTime(Sec),
+   lDateTimeToSec({{Y, M, D}, {H, 0, 0}}).
 
 %% 当前小时结束时间戳
 -spec hourEnd() -> timestamp().
 hourEnd() ->
-   Sec = erlang:system_time(second),
-   Sec - Sec rem ?SECS_HOUR + ?SECS_HOUR.
+   hourEnd(erlang:system_time(second)).
 
-%% Sec所在小时结束时间戳
+%% Sec所在小时结束时间戳 (返回下一小时的起始点)
 -spec hourEnd(Sec :: timestamp()) -> timestamp().
 hourEnd(Sec) ->
-   Sec - Sec rem ?SECS_HOUR + ?SECS_HOUR.
+   {{Y, M, D}, {H, _, _}} = secToLDateTime(Sec),
+   %% 计算下一个小时
+   {NewDate, NewTime} =
+      case H of
+         23 ->
+            Days = date_to_gregorian_days({Y, M, D}),
+            {gregorian_days_to_date(Days + 1), {0, 0, 0}};
+         _ ->
+            {{Y, M, D}, {H + 1, 0, 0}}
+      end,
+   lDateTimeToSec({NewDate, NewTime}).
 
 %% 本地当前天开始时间戳
 -spec dayLBegin() -> timestamp().
 dayLBegin() ->
-   Sec = erlang:system_time(second),
-   Sec - (Sec + timeZoneDiff()) rem ?SECS_DAY.
+   dayLBegin(erlang:system_time(second)).
 
 %% 本地Sec所在天开始时间戳
 -spec dayLBegin(Sec :: timestamp()) -> timestamp().
 dayLBegin(Sec) ->
-   Sec - (Sec + timeZoneDiff()) rem ?SECS_DAY.
+   {{Y, M, D}, _} = secToLDateTime(Sec),
+   lDateTimeToSec({{Y, M, D}, {0, 0, 0}}).
 
 %% 世界Sec所在天开始时间戳
 -spec dayUBegin() -> timestamp().
 dayUBegin() ->
-   Sec = erlang:system_time(second),
-   Sec - Sec rem ?SECS_DAY.
+   dayUBegin(erlang:system_time(second)).
 
 %% 世界Sec所在天开始时间戳
 -spec dayUBegin(Sec :: timestamp()) -> timestamp().
@@ -344,19 +357,20 @@ dayUBegin(Sec) ->
 %% 本地当前天结束时间戳
 -spec dayLEnd() -> timestamp().
 dayLEnd() ->
-   Sec = erlang:system_time(second),
-   Sec - (Sec + timeZoneDiff()) rem ?SECS_DAY + ?SECS_DAY.
+   dayLEnd(erlang:system_time(second)).
 
 %% 本地Sec所在天结束时间戳
 -spec dayLEnd(Sec :: timestamp()) -> timestamp().
 dayLEnd(Sec) ->
-   Sec - (Sec + timeZoneDiff()) rem ?SECS_DAY + ?SECS_DAY.
+   {Date, _} = secToLDateTime(Sec),
+   Days = date_to_gregorian_days(Date),
+   NextDay = gregorian_days_to_date(Days + 1),
+   lDateTimeToSec({NextDay, {0, 0, 0}}).
 
 %% 世界当前天结束时间戳
 -spec dayUEnd() -> timestamp().
 dayUEnd() ->
-   Sec = erlang:system_time(second),
-   Sec - Sec rem ?SECS_DAY + ?SECS_DAY.
+   dayUEnd(erlang:system_time(second)).
 
 %% 世界Sec所在天结束时间戳
 -spec dayUEnd(Sec :: timestamp()) -> timestamp().
@@ -364,27 +378,22 @@ dayUEnd(Sec) ->
    Sec - Sec rem ?SECS_DAY + ?SECS_DAY.
 
 %% 本地当前天开始结束时间戳
--spec dayLBeginEnd() -> timestamp().
+-spec dayLBeginEnd() -> {timestamp(), timestamp()}. %% [修正] Spec类型
 dayLBeginEnd() ->
-   Sec = erlang:system_time(second),
-   Begin = Sec - (Sec + timeZoneDiff()) rem ?SECS_DAY,
-   {Begin, Begin + ?SECS_DAY}.
+   dayLBeginEnd(erlang:system_time(second)).
 
 %% 本地Sec所在天开始结束时间戳
--spec dayLBeginEnd(Sec :: timestamp()) -> timestamp().
+-spec dayLBeginEnd(Sec :: timestamp()) -> {timestamp(), timestamp()}.
 dayLBeginEnd(Sec) ->
-   Begin = Sec - (Sec + timeZoneDiff()) rem ?SECS_DAY,
-   {Begin, Begin + ?SECS_DAY}.
+   {dayLBegin(Sec), dayLEnd(Sec)}.
 
 %% 世界当前天开始结束时间戳
--spec dayUBeginEnd() -> timestamp().
+-spec dayUBeginEnd() -> {timestamp(), timestamp()}.
 dayUBeginEnd() ->
-   Sec = erlang:system_time(second),
-   Begin = Sec - Sec rem ?SECS_DAY,
-   {Begin, Begin + ?SECS_DAY}.
+   dayUBeginEnd(erlang:system_time(second)).
 
 %% 世界Sec所在天开始结束时间戳
--spec dayUBeginEnd(Sec :: timestamp()) -> timestamp().
+-spec dayUBeginEnd(Sec :: timestamp()) -> {timestamp(), timestamp()}.
 dayUBeginEnd(Sec) ->
    Begin = Sec - Sec rem ?SECS_DAY,
    {Begin, Begin + ?SECS_DAY}.
@@ -392,80 +401,78 @@ dayUBeginEnd(Sec) ->
 %% 本地当前周开始时间戳
 -spec weekLBegin() -> timestamp().
 weekLBegin() ->
-   Sec = erlang:system_time(second),
-   Sec - (Sec - 345600 + timeZoneDiff()) rem ?SECS_WEEK.
+   weekLBegin(erlang:system_time(second)).
 
 %% 本地Sec所在周开始时间戳
 -spec weekLBegin(Sec :: timestamp()) -> timestamp().
 weekLBegin(Sec) ->
-   Sec - (Sec - 345600 + timeZoneDiff()) rem ?SECS_WEEK.
+   {{Y, M, D}, _} = secToLDateTime(Sec),
+   W = day_of_the_week(Y, M, D),
+   StartG = date_to_gregorian_days({Y, M, D}) - (W - 1),
+   StartDate = gregorian_days_to_date(StartG),
+   lDateTimeToSec({StartDate, {0, 0, 0}}).
 
 %% 世界当前周的开始时间戳
 -spec weekUBegin() -> timestamp().
 weekUBegin() ->
-   Sec = erlang:system_time(second),
-   Sec - (Sec - 345600) rem ?SECS_WEEK.
+   weekUBegin(erlang:system_time(second)).
 
 %% 世界Sec所在周的开始时间戳
+%% [修正] 确保与 countUWeek 的 +259200 逻辑绝对一致。
+%% Start = Count * 7days - 259200 (Offset)
 -spec weekUBegin(Sec :: timestamp()) -> timestamp().
 weekUBegin(Sec) ->
-   Sec - (Sec - 345600) rem ?SECS_WEEK.
+   countUWeek(Sec) * ?SECS_WEEK - 259200.
 
 %% 本地当前周的结束时间戳
 -spec weekLEnd() -> timestamp().
 weekLEnd() ->
-   Sec = erlang:system_time(second),
-   Sec - (Sec - 345600 + timeZoneDiff()) rem ?SECS_WEEK + ?SECS_WEEK.
+   weekLEnd(erlang:system_time(second)).
 
 %% 本地Sec所在周的结束时间戳
 -spec weekLEnd(Sec :: timestamp()) -> timestamp().
 weekLEnd(Sec) ->
-   Sec - (Sec - 345600 + timeZoneDiff()) rem ?SECS_WEEK + ?SECS_WEEK.
+   {{Y, M, D}, _} = secToLDateTime(Sec),
+   W = day_of_the_week(Y, M, D),
+   Days = date_to_gregorian_days({Y, M, D}) - (W - 1) + 7,
+   NextMonday = gregorian_days_to_date(Days),
+   lDateTimeToSec({NextMonday, {0, 0, 0}}).
 
 %% 世界当前周的开始时间戳
 -spec weekUEnd() -> timestamp().
 weekUEnd() ->
-   Sec = erlang:system_time(second),
-   Sec - (Sec - 345600) rem ?SECS_WEEK + ?SECS_WEEK.
+   weekUEnd(erlang:system_time(second)).
 
 %% 世界Sec所在周的结束时间戳
 -spec weekUEnd(Sec :: timestamp()) -> timestamp().
 weekUEnd(Sec) ->
-   Sec - (Sec - 345600) rem ?SECS_WEEK + ?SECS_WEEK.
+   weekUBegin(Sec) + ?SECS_WEEK.
 
 %% 本地当前周的开始结束时间戳
--spec weekLBeginEnd() -> timestamp().
+-spec weekLBeginEnd() -> {timestamp(), timestamp()}.
 weekLBeginEnd() ->
-   Sec = erlang:system_time(second),
-   Begin = Sec - (Sec - 345600 + timeZoneDiff()) rem ?SECS_WEEK,
-   {Begin, Begin + ?SECS_WEEK}.
+   weekLBeginEnd(erlang:system_time(second)).
 
 %% 本地Sec所在周的开始结束时间戳
--spec weekLBeginEnd(Sec :: timestamp()) -> timestamp().
+-spec weekLBeginEnd(Sec :: timestamp()) -> {timestamp(), timestamp()}.
 weekLBeginEnd(Sec) ->
-   Begin = Sec - (Sec - 345600 + timeZoneDiff()) rem ?SECS_WEEK,
-   {Begin, Begin + ?SECS_WEEK}.
+   {weekLBegin(Sec), weekLEnd(Sec)}.
 
 %% 世界当前周的开始结束时间戳
--spec weekUBeginEnd() -> timestamp().
+-spec weekUBeginEnd() -> {timestamp(), timestamp()}.
 weekUBeginEnd() ->
-   Sec = erlang:system_time(second),
-   Begin = Sec - (Sec - 345600) rem ?SECS_WEEK,
-   {Begin, Begin + ?SECS_WEEK}.
+   weekUBeginEnd(erlang:system_time(second)).
 
 %% 世界Sec所在周的开始结束时间戳
--spec weekUBeginEnd(Sec :: timestamp()) -> timestamp().
+-spec weekUBeginEnd(Sec :: timestamp()) -> {timestamp(), timestamp()}.
 weekUBeginEnd(Sec) ->
-   Begin = Sec - (Sec - 345600) rem ?SECS_WEEK,
+   Begin = weekUBegin(Sec),
    {Begin, Begin + ?SECS_WEEK}.
 
 %% 本地当前月的开始时间戳
 -spec monthLBegin() -> timestamp().
 monthLBegin() ->
-   Sec = erlang:system_time(second),
-   {{Year, Month, _Day}, _Time} = secToLDateTime(Sec),
-   MonthStartDateTime = {{Year, Month, 1}, {0, 0, 0}},
-   lDateTimeToSec(MonthStartDateTime).
+   monthLBegin(erlang:system_time(second)).
 
 %% 本地Sec所在月的开始时间戳
 -spec monthLBegin(Sec :: timestamp()) -> timestamp().
@@ -477,10 +484,7 @@ monthLBegin(Sec) ->
 %% 世界当前月的开始时间戳
 -spec monthUBegin() -> timestamp().
 monthUBegin() ->
-   Sec = erlang:system_time(second),
-   {{Year, Month, _Day}, _Time} = erlang:posixtime_to_universaltime(Sec),
-   MonthStartDateTime = {{Year, Month, 1}, {0, 0, 0}},
-   erlang:universaltime_to_posixtime(MonthStartDateTime).
+   monthUBegin(erlang:system_time(second)).
 
 %% 世界Sec所在月的开始时间戳
 -spec monthUBegin(Sec :: timestamp()) -> timestamp().
@@ -492,36 +496,32 @@ monthUBegin(Sec) ->
 %% 本地当前月的结束时间戳
 -spec monthLEnd() -> timestamp().
 monthLEnd() ->
-   Sec = erlang:system_time(second),
-   {{Year, Month, _Day}, _Time} = secToLDateTime(Sec),
-   MonthDay = monthDay(Year, Month),
-   MonthEndDateTime = {{Year, Month, MonthDay}, {23, 59, 59}},
-   lDateTimeToSec(MonthEndDateTime).
+   monthLEnd(erlang:system_time(second)).
 
 %% 本地Sec所在月的结束时间戳
 -spec monthLEnd(Sec :: timestamp()) -> timestamp().
 monthLEnd(Sec) ->
    {{Year, Month, _Day}, _Time} = secToLDateTime(Sec),
-   MonthDay = monthDay(Year, Month),
-   MonthEndDateTime = {{Year, Month, MonthDay}, {23, 59, 59}},
-   lDateTimeToSec(MonthEndDateTime).
+   {NextYear, NextMonth} = case Month of
+      12 -> {Year + 1, 1};
+      _  -> {Year, Month + 1}
+   end,
+   lDateTimeToSec({{NextYear, NextMonth, 1}, {0, 0, 0}}).
 
 %% 世界当前周的结束时间戳
 -spec monthUEnd() -> timestamp().
 monthUEnd() ->
-   Sec = erlang:system_time(second),
-   {{Year, Month, _Day}, _Time} = erlang:posixtime_to_universaltime(Sec),
-   MonthDay = monthDay(Year, Month),
-   MonthEndDateTime = {{Year, Month, MonthDay}, {23, 59, 59}},
-   erlang:universaltime_to_posixtime(MonthEndDateTime).
+   monthUEnd(erlang:system_time(second)).
 
 %% 世界Sec所在月的结束时间戳
 -spec monthUEnd(Sec :: timestamp()) -> timestamp().
 monthUEnd(Sec) ->
    {{Year, Month, _Day}, _Time} = erlang:posixtime_to_universaltime(Sec),
-   MonthDay = monthDay(Year, Month),
-   MonthEndDateTime = {{Year, Month, MonthDay}, {23, 59, 59}},
-   erlang:universaltime_to_posixtime(MonthEndDateTime).
+   {NextYear, NextMonth} = case Month of
+      12 -> {Year + 1, 1};
+      _  -> {Year, Month + 1}
+   end,
+   erlang:universaltime_to_posixtime({{NextYear, NextMonth, 1}, {0, 0, 0}}).
 
 %% 闰年判断函数
 -spec isLeapYear(Yesr :: year()) -> boolean().
@@ -557,38 +557,25 @@ monthSecs(_, _) ->
    2678400.
 
 %% 本地当前月的开始结束时间戳
--spec monthLBeginEnd() -> timestamp().
+-spec monthLBeginEnd() -> {timestamp(), timestamp()}.
 monthLBeginEnd() ->
-   Sec = erlang:system_time(second),
-   {{Year, Month, _Day}, _Time} = secToLDateTime(Sec),
-   MonthStartDateTime = {{Year, Month, 1}, {0, 0, 0}},
-   Begin = lDateTimeToSec(MonthStartDateTime),
-   {Begin, Begin + monthSecs(Year, Month)}.
+   monthLBeginEnd(erlang:system_time(second)).
 
 %% 本地Sec所在月的开始结束时间戳
--spec monthLBeginEnd(Sec :: timestamp()) -> timestamp().
+-spec monthLBeginEnd(Sec :: timestamp()) -> {timestamp(), timestamp()}.
 monthLBeginEnd(Sec) ->
-   {{Year, Month, _Day}, _Time} = secToLDateTime(Sec),
-   MonthStartDateTime = {{Year, Month, 1}, {0, 0, 0}},
-   Begin = lDateTimeToSec(MonthStartDateTime),
-   {Begin, Begin + monthSecs(Year, Month)}.
+   {monthLBegin(Sec), monthLEnd(Sec)}.
 
 %% 世界当前月的开始结束时间戳
--spec monthUBeginEnd() -> timestamp().
+-spec monthUBeginEnd() -> {timestamp(), timestamp()}.
 monthUBeginEnd() ->
-   Sec = erlang:system_time(second),
-   {{Year, Month, _Day}, _Time} = erlang:posixtime_to_universaltime(Sec),
-   MonthStartDateTime = {{Year, Month, 1}, {0, 0, 0}},
-   Begin = erlang:universaltime_to_posixtime(MonthStartDateTime),
-   {Begin, Begin + monthSecs(Year, Month)}.
+   monthUBeginEnd(erlang:system_time(second)).
+
 
 %% 世界Sec所在月的开始结束时间戳
--spec monthUBeginEnd(Sec :: timestamp()) -> timestamp().
+-spec monthUBeginEnd(Sec :: timestamp()) -> {timestamp(), timestamp()}.
 monthUBeginEnd(Sec) ->
-   {{Year, Month, _Day}, _Time} = erlang:posixtime_to_universaltime(Sec),
-   MonthStartDateTime = {{Year, Month, 1}, {0, 0, 0}},
-   Begin = erlang:universaltime_to_posixtime(MonthStartDateTime),
-   {Begin, Begin + monthSecs(Year, Month)}.
+   {monthUBegin(Sec), monthUEnd(Sec)}.
 
 %% 星期名字缩写
 -spec sWeekName(week()) -> binary().
@@ -643,7 +630,7 @@ lMonthName(12) -> <<"December">>.
 %% 年月日的数字version
 -spec dateNumber() -> integer().
 dateNumber() ->
-   {Year, Month, Day} = erlang:date(),
+   {Year, Month, Day} = curDate(),
    Year * 10000 + Month * 100 + Day.
 
 %% 年月日的数字version
@@ -688,19 +675,19 @@ diffUDateTimeSec(DateTime1, DateTime2) ->
    erlang:abs(Secs).
 
 %% 计算两个本地datetime() 时间差 单位 daytime()
--spec diffLDateTimeDayTime(datetime(), datetime()) -> timestamp().
+-spec diffLDateTimeDayTime(datetime(), datetime()) -> {integer(), time()}. %% [修正] Spec类型
 diffLDateTimeDayTime(DateTime1, DateTime2) ->
    Secs = lDateTimeToSec(DateTime1) - lDateTimeToSec(DateTime2),
    secToDayTime(erlang:abs(Secs)).
 
 %% 计算两个世界datetime() 时间差 单位 daytime()
--spec diffUDateTimeDayTime(datetime(), datetime()) -> timestamp().
+-spec diffUDateTimeDayTime(datetime(), datetime()) -> {integer(), time()}. %% [修正] Spec类型
 diffUDateTimeDayTime(DateTime1, DateTime2) ->
    Secs = uDateTimeToSec(DateTime1) - uDateTimeToSec(DateTime2),
    secToDayTime(erlang:abs(Secs)).
 
 %% 计算两个秒单位的 时间戳 的时间差 单位 daytime()
--spec diffSecs(timestamp(), timestamp()) -> timestamp().
+-spec diffSecs(timestamp(), timestamp()) -> {integer(), time()}. %% [修正] Spec类型
 diffSecs(Sec1, Sec2) ->
    secToDayTime(erlang:abs(Sec1 - Sec2)).
 
